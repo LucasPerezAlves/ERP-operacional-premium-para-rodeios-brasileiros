@@ -48,6 +48,11 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/health").permitAll()
+                // Link de aprovação clicado pela gerência a partir do e-mail
+                // (protegido por token HMAC validado no controller)
+                .requestMatchers("/api/auth/aprovar").permitAll()
+                // Webhook do Supabase (protegido por segredo compartilhado no header)
+                .requestMatchers("/api/webhooks/**").permitAll()
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
 

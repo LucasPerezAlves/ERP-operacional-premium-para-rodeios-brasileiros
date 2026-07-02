@@ -6,22 +6,18 @@ import com.arena.rodeio.model.CargoFuncionario;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Payload de criação/atualização de funcionário.
+ * Payload de atualização do perfil (o perfil é CRIADO pela trigger do banco;
+ * o e-mail pertence ao Supabase Auth e não é editável por aqui).
  * Record imutável; dinheiro sempre como BigDecimal.
  */
-public record FuncionarioRequest(
+public record PerfilFuncionarioRequest(
 
     @NotBlank(message = "Informe o nome completo do funcionário.")
     String nomeCompleto,
-
-    @NotBlank(message = "Informe o e-mail.")
-    @Email(message = "E-mail inválido.")
-    String email,
 
     @NotNull(message = "Informe o cargo.")
     CargoFuncionario cargo,
