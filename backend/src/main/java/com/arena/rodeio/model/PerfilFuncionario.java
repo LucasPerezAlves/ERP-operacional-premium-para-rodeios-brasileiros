@@ -47,6 +47,14 @@ public class PerfilFuncionario {
     @Column(name = "perfil_acesso", nullable = false, length = 20)
     private PerfilAcesso perfilAcesso;
 
+    /** Posto do funcionário no evento (ex.: "Bar de Fora", "Portaria"). */
+    @Column(name = "area_trabalho", length = 60)
+    private String areaTrabalho;
+
+    /** URL pública da foto no bucket fotos-funcionarios (Supabase Storage). */
+    @Column(name = "foto_url", length = 500)
+    private String fotoUrl;
+
     /**
      * Limite de dinheiro em espécie que o operador pode acumular antes de o
      * sistema exigir uma Sangria (regra de negócio nº 2).
@@ -119,6 +127,22 @@ public class PerfilFuncionario {
 
     public void setPerfilAcesso(PerfilAcesso perfilAcesso) {
         this.perfilAcesso = perfilAcesso;
+    }
+
+    public String getAreaTrabalho() {
+        return areaTrabalho;
+    }
+
+    public void setAreaTrabalho(String areaTrabalho) {
+        this.areaTrabalho = areaTrabalho;
+    }
+
+    public String getFotoUrl() {
+        return fotoUrl;
+    }
+
+    public void setFotoUrl(String fotoUrl) {
+        this.fotoUrl = fotoUrl;
     }
 
     public BigDecimal getLimiteSangria() {

@@ -13,11 +13,103 @@
   }
 }
 
-/* Usuários que preferem menos movimento: desliga as animações decorativas */
+@layer components {
+  /**
+   * Botão skeuomórfico "porteira de metal": sombra interna clara no topo
+   * simulando volume + afundamento físico real no :active (não apenas
+   * escala — translateY + redução de sombra externa).
+   */
+  .btn-skeuo {
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 221, 150, 0.4),
+      inset 0 -4px 8px 0 rgba(0, 0, 0, 0.45),
+      0 12px 24px -8px rgba(0, 0, 0, 0.75);
+    transition:
+      transform 120ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-skeuo:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow:
+      inset 0 2px 6px 0 rgba(0, 0, 0, 0.55),
+      0 3px 8px -4px rgba(0, 0, 0, 0.6);
+  }
+
+  /**
+   * Borda "metálica desgastada" âmbar do cartão Porteira: em vez de um
+   * border-color plano, empilha reflexo superior + sombra interna inferior
+   * + fio âmbar + sombra de profundidade externa.
+   */
+  .shadow-porteira {
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 214, 140, 0.12),
+      inset 0 0 0 1px rgba(180, 130, 60, 0.4),
+      inset 0 -6px 16px 0 rgba(0, 0, 0, 0.6),
+      0 30px 70px -20px rgba(0, 0, 0, 0.9);
+  }
+
+  /**
+   * Rótulo de whisky: moldura dupla clássica — fio externo dourado, respiro
+   * na cor do fundo, fio interno de couro. Para relatórios, comprovantes de
+   * fechamento e certificados (DESIGN-SYSTEM.md § Materiais).
+   */
+  .material-rotulo {
+    border: 1px solid theme("colors.gold.500 / 40%");
+    box-shadow:
+      inset 0 0 0 4px theme("colors.arena.950"),
+      inset 0 0 0 5px theme("colors.leather.600 / 60%");
+  }
+
+  /**
+   * Costura de sela: pesponto tracejado interno a 8px da borda — variante
+   * "couro costurado" para cards de destaque. Outline acompanha o raio.
+   */
+  .costura {
+    outline: 1.5px dashed theme("colors.leather.300 / 35%");
+    outline-offset: -8px;
+  }
+}
+
+@layer utilities {
+  /**
+   * Regra inegociável de tipografia financeira (DESIGN-SYSTEM.md):
+   * todo valor monetário usa dígitos tabulares — larguras fixas impedem
+   * o "tremor" do saldo em espécie a cada venda registrada.
+   */
+  .num-tabular {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /**
+   * Grão de arena portátil: ruído feTurbulence embutido em data-URI, tingido
+   * de âmbar. Drop-in em qualquer superfície (a imersão não morre depois do
+   * login): <div class="textura-grao" aria-hidden /> num container relative.
+   */
+  .textura-grao {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    background-size: 160px 160px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.83 0 0 0 0 0.69 0 0 0 0 0.22 0.2126 0.7152 0.0722 0 0'/></filter><rect width='160' height='160' filter='url(%23g)'/></svg>");
+  }
+}
+
+/* Usuários que preferem menos movimento: desliga as animações decorativas.
+   O lampião (SOS) vira estado estático — a informação permanece, o movimento não. */
 @media (prefers-reduced-motion: reduce) {
   .animate-dust-rise,
   .animate-spotlight-flicker,
-  .animate-horseshoe-pulse {
+  .animate-horseshoe-pulse,
+  .animate-grain-drift,
+  .animate-brilho-metalico,
+  .animate-lampiao,
+  .animate-ferradura-acende {
     animation: none;
+  }
+
+  .auth-flip-container {
+    transition: none !important;
   }
 }

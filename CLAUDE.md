@@ -13,7 +13,10 @@ sangrias e prestação de contas em tempo real, operando em ambiente de rede ins
 - **Framework:** Spring Boot 3 (Maven)
 - **Persistência:** Spring Data JPA → PostgreSQL gerenciado pelo Supabase
 - **Segurança:** Spring Security como OAuth2 Resource Server, validando os
-  tokens JWT emitidos pelo Supabase Auth
+  tokens JWT emitidos pelo Supabase Auth. Este projeto usa as **JWT Signing
+  Keys assimétricas (ES256)** do Supabase — não o "JWT Secret" HS256 legado.
+  A validação usa o endpoint JWKS (`{SUPABASE_URL}/auth/v1/.well-known/jwks.json`),
+  configurado via `SUPABASE_URL`.
 - **Pacote raiz:** `com.arena.rodeio` com camadas `controller`, `service`,
   `repository`, `model`, `dto`, `config`
 
@@ -23,7 +26,152 @@ sangrias e prestação de contas em tempo real, operando em ambiente de rede ins
   madeira (`wood`), couro desgastado (`leather`), ferrugem para erros (`rust`) e
   dourado fosco para destaques (`gold`); títulos em Alfa Slab One, corpo em Inter
 - **Autenticação:** SDK oficial `@supabase/supabase-js` (signInWithPassword / signUp)
-- A raiz `/` carrega diretamente a tela de Login/Cadastro — **não há landing page**
+- A raiz `/` carrega diretamente a tela de Login/Cadastro — **não há landing page pública**
+- **Landing Pages por perfil (pós-login):** cada nível de acesso tem uma página
+  inicial própria, dedicada — não um dashboard genérico com `if`:
+  - `AdminLandingPage.tsx` (`/admin-dashboard`) — grid de módulos (cards
+    grandes) que levam a sub-fluxos: Abrir Caixa, Gerenciar Equipe, etc.
+  - `OperadorLandingPage.tsx` (`/operador-dashboard`) — foco em **status**:
+    "Aguardando gerência abrir caixa" ou "Caixa Aberto: R$ X de troco"; a
+    interface de venda (PDV) só aparece quando o próprio status mostra caixa
+    aberto.
+
+## Linguagem Visual e Experiência do Usuário (Rodeio Premium)
+
+O sistema "Controle da Arena" NÃO deve seguir a estética padrão de dashboards
+SaaS, fintechs ou templates genéricos de Tailwind/Shadcn.
+
+O objetivo visual é criar a sensação de estar operando os bastidores financeiros
+de um grande rodeio brasileiro premium.
+
+### Princípios Visuais
+
+A identidade visual deve transmitir:
+
+- Confiança financeira
+- Robustez operacional
+- Tradição do rodeio
+- Luxo rústico
+- Operação em ambiente real de evento
+- Alta legibilidade em ambientes com pouca iluminação
+
+### Referências Visuais
+
+Utilizar como inspiração estética:
+
+- Professional Bull Riders (PBR)
+- Wrangler
+- Ariat
+- Yellowstone
+- Jack Daniel's
+- Cartazes antigos de rodeio
+- Couro artesanal premium
+- Fivelas western
+- Madeira envelhecida
+- Metal oxidado
+- Arena de rodeio noturna
+- Rótulos premium de whisky
+
+### Paleta Conceitual
+
+- Madeira escura (`wood`)
+- Couro envelhecido (`leather`)
+- Ferrugem controlada (`rust`)
+- Dourado fosco (`gold`)
+- Aço envelhecido (`steel`)
+- Tons escuros de arena (`arena-dark`)
+
+> **Spec executável:** todas as paletas (incluindo `steel` e `arena` — o
+> "arena-dark" desta lista), semânticas (`campo` para valores positivos,
+> `bordo` para destrutivo/SOS), tipografia, materiais, componentes e
+> animações estão definidos em **`DESIGN-SYSTEM.md`** (fonte da verdade do
+> design) e implementados em `frontend/tailwind.config.js` +
+> `frontend/src/index.css`. Toda tela nova segue o checklist pre-flight do
+> DESIGN-SYSTEM.md; telas antigas migram conforme o mapa de migração dele.
+
+### Tipografia
+
+- Títulos: Alfa Slab One
+- Conteúdo: Inter
+- Valores monetários: fonte altamente legível e tabular
+- A hierarquia tipográfica deve ser forte e clara
+
+### Componentes Visuais
+
+Os componentes devem parecer:
+
+- Sólidos
+- Táteis
+- Profissionais
+- Operacionais
+- Inspirados em materiais físicos
+
+Evitar:
+
+- Glassmorphism
+- Neumorphism
+- Gradientes neon
+- Estética cyberpunk
+- Dashboards SaaS genéricos
+- Cards excessivamente arredondados
+- Aparência padrão de Tailwind
+- Aparência padrão de Shadcn
+- Hero sections genéricas
+- Centralização excessiva dos elementos
+
+### Linguagem de Feedback Visual
+
+Substituir elementos genéricos por elementos temáticos:
+
+| Contexto | Elemento Visual |
+|----------|----------------|
+| Loading | Laço girando |
+| Processando | Poeira da arena |
+| Sucesso | Ferradura dourada |
+| Aviso | Placa de arena iluminada |
+| Erro | Metal oxidado |
+| SOS | Lampião vermelho pulsante |
+| Sangria | Malote de couro |
+| Caixa Aberto | Ferradura iluminada |
+| Caixa Fechado | Ferradura escurecida |
+| Administração | Brasão western |
+| Operação | Distintivo de peão |
+| Relatórios | Livro-caixa antigo |
+
+### Animações
+
+As animações devem ser:
+
+- Curtas
+- Sutis
+- Funcionais
+- Elegantes
+
+Inspiradas em:
+
+- Movimento de laço
+- Poeira de arena
+- Reflexo metálico
+- Movimento de couro
+- Vibração de ferraduras
+
+Nunca utilizar:
+
+- Bounce excessivo
+- Efeitos caricatos
+- Animações infantis
+- Efeitos futuristas
+- Transições exageradas
+
+### Filosofia de Design
+
+O usuário deve sentir que está utilizando:
+
+> "Um sistema operacional premium para gerenciamento financeiro de grandes eventos de rodeio brasileiros"
+
+e não:
+
+> "Um dashboard SaaS adaptado para tema cowboy".
 
 ## Regras Inegociáveis
 
@@ -41,6 +189,21 @@ sangrias e prestação de contas em tempo real, operando em ambiente de rede ins
    nasce `PENDENTE` (trigger em `auth.users`), dispara e-mail para a gerência
    com link assinado (HMAC) "Aprovar Peão", e o front-end força `signOut` no
    login de quem ainda não foi aprovado.
+6. **RBAC também no back-end.** `SupabaseJwtAuthenticationConverter` resolve
+   a role (`ROLE_MASTER_ADMIN` / `ROLE_OPERADOR`) consultando
+   `perfis_funcionarios` pelo `sub` do JWT a cada requisição; perfis
+   `PENDENTE`/`REJEITADO` não recebem nenhuma role. Endpoints sensíveis usam
+   `@PreAuthorize("hasRole(...)")` ou `hasAnyRole(...)` — nunca só
+   `authenticated()`, que não garante aprovação da gerência.
+7. **Abertura e fechamento de caixa são exclusivos do MASTER_ADMIN.** O
+   Operador **não tem autonomia** para abrir nem fechar o próprio caixa —
+   essa responsabilidade é 100% da gerência. Fluxo: o Admin acessa "Abrir
+   Caixa", escolhe um operador numa lista (com foto e área de trabalho),
+   define o valor do troco inicial e confirma; o back-end grava quem
+   executou a ação (`aberto_por_admin_id`) separado de quem é o dono do
+   caixa (`operador_id`). O Operador apenas visualiza o status do próprio
+   caixa e vende — nunca abre/fecha. `POST /api/caixas/abrir` e
+   `PUT /api/caixas/{id}/fechar` exigem `hasRole('MASTER_ADMIN')`.
 
 ## Regras de Negócio do Domínio
 
@@ -118,6 +281,18 @@ dos módulos 2–4 do roadmap (não são módulos novos, são features desses pa
 5. **Dashboard de Custo de Funcionário em Tempo Real** — custo acumulado da
    equipe ativa durante o evento (ex.: "15 funcionários ativos, custo da hora
    corrente: R$ 450,00"), calculado a partir do registro de ponto.
+6. **Cadastro de Estoque por Foto (IA/OCR)** — o Admin fotografa a nota fiscal
+   de compra; um serviço de IA de visão computacional lê os itens, quantidades
+   e valores da imagem e sugere o cadastro automático no estoque (módulo 3),
+   evitando digitação manual item por item. A leitura é uma **sugestão**: o
+   Admin sempre revisa antes de confirmar o cadastro.
+7. **Leitura de Vendas por Foto (Conciliação de Fechamento)** — mesmo motor de
+   IA aplicado no fluxo de fechamento de caixa (Gerenciamento de Equipe): o
+   Admin fotografa o registro de vendas do posto (comanda, régua de contagem);
+   a IA identifica quais produtos foram vendidos e em que quantidade, exibe a
+   leitura para conferência e **só abate do estoque depois do "OK" do Admin**
+   — nunca automático sem confirmação humana. Alimenta a conciliação da regra
+   de negócio nº 3 (Dinheiro vs. Estoque).
 
 ## Como Rodar
 
@@ -135,10 +310,58 @@ npm run dev   # http://localhost:5173
 Variáveis de ambiente: ver `backend/src/main/resources/application.yml` e
 `frontend/.env.example`.
 
+## Requisitos de Cadastro (Módulo 1)
+
+Além de nome, e-mail e senha, o cadastro do Peão (`AuthPage`, formulário de
+Cadastro) exige:
+- **Área de Trabalho** (select — ex.: Bar de Fora, Bar Interno, Portaria,
+  Estacionamento, Bilheteria) — coluna `area_trabalho` em
+  `perfis_funcionarios`. Necessária para o Admin identificar o posto do
+  operador na lista de "Abrir Caixa" e nos alertas de sangria/SOS.
+- **Foto** (captura por câmera ou upload) — coluna `foto_url`. Usada pelo
+  Admin para identificação visual imediata (a lista de operadores mostra a
+  foto ao lado do nome). Upload vai para o bucket `fotos-funcionarios` do
+  Supabase Storage; a trigger de criação do perfil copia a URL junto com os
+  demais metadados do cadastro.
+
 ## Roadmap de Módulos
 
-1. **Autenticação e Gestão de Funcionários** ← em desenvolvimento
-2. Caixas, vendas e sangrias
-3. Carga de pista/bar e conciliação de estoque
+1. **Autenticação e Gestão de Funcionários** ✅ concluído (inclui Aprovação de
+   Gerência, RBAC validado ponta a ponta, Área de Trabalho e Foto no cadastro)
+2. **Caixas, Vendas e Sangrias** ← em desenvolvimento
+   - Back-end pronto: entidades `Caixa`/`Venda`/`Sangria`, saldo em espécie
+     sempre derivado (nunca armazenado), alerta `ALERTA_SANGRIA_ATINGIDO` na
+     resposta de venda em DINHEIRO, rotas em `/api/caixas` (scripts SQL 004–006)
+   - Abertura/fechamento 100% do Admin (regra inegociável nº 7): fluxo
+     "Abrir Caixa" com lista de operadores (foto + área); fechamento exige
+     valor contado fisicamente + motivo, calculando `divergencia`
+     (sobra/falta) contra o saldo derivado dos lançamentos
+   - `GET /api/caixas/meu` (Operador acompanha o próprio status) e
+     `GET /api/caixas/abertos` (Admin vê o status de todo mundo)
+   - Landing do Operador vira hub de funções ("Vender" leva ao PDV em
+     `/operador-dashboard/venda`; só habilitado com caixa aberto)
+   - Gerenciamento de Equipe do Admin (`/admin-dashboard/equipe`): busca,
+     filtro por área, grid de operadores com badge de status de caixa e
+     fluxo de fechamento com teclado numérico + motivo
+   - PDV do Operador (venda): Combo-Click, Calculadora de Troco, bips por
+     Web Audio, bloqueio de DINHEIRO sob alerta de sangria e SOS via
+     Supabase Realtime (canal `arena-sos`)
+   - Pendente: painel do Admin assinar o canal `arena-sos`, registrar
+     sangria pela UI, persistência do SOS no back-end, relatório de
+     divergência (Scorecard de Operadores) usando o campo já coletado
+3. Carga de pista/bar e conciliação de estoque — inclui os itens 6 e 7 do
+   backlog do Master Admin (cadastro de estoque e leitura de vendas por
+   foto/IA, sempre com confirmação humana antes de qualquer baixa)
 4. Cortesias e relatórios do Admin
 5. PWA offline-first e cashless/RFID
+
+## Dívida Técnica de Design
+
+✅ **Quitada na migração total do front-end (2026-07-02).** Todo o front foi
+refatorado para o DESIGN-SYSTEM.md: zero glassmorphism (superfícies sólidas
+de madeira), zero cor crua do Tailwind (só tokens), zero `rounded-2xl`,
+`min-h-dvh` em toda página, dígitos tabulares em todo valor monetário,
+ícones 100% SVG próprios e componentes compartilhados em
+`frontend/src/components/ui/` (`Botao`, `Alerta`, `Modal`, `Avatar`,
+`SeloCaixa`). O checklist pre-flight do DESIGN-SYSTEM.md roda mecanicamente
+por grep e deve continuar zerado em toda tela nova.
