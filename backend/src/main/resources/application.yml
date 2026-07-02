@@ -31,8 +31,10 @@ spring:
       "[mail.smtp.starttls.enable]": true
 
 supabase:
-  # Dashboard > Project Settings > API > JWT Secret
-  jwt-secret: ${SUPABASE_JWT_SECRET}
+  # URL base do projeto (mesma do frontend/.env VITE_SUPABASE_URL), usada
+  # para montar o endpoint JWKS: {url}/auth/v1/.well-known/jwks.json
+  # Ex.: https://SEU-PROJETO.supabase.co
+  url: ${SUPABASE_URL}
 
 app:
   cors:

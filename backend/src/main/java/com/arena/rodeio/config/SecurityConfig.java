@@ -1,17 +1,15 @@
 package com.arena.rodeio.config;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-
-import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,20 +22,32 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
  * Esta API atua como OAuth2 Resource Server: cada requisição chega com o
  * access token JWT do Supabase no header Authorization e é validada aqui.
  *
- * O Supabase assina os tokens com HS256 usando o "JWT Secret" do projeto
- * (Dashboard > Project Settings > API > JWT Secret), injetado via
- * SUPABASE_JWT_SECRET. Se o projeto migrar para chaves assimétricas,
- * troque o decoder por NimbusJwtDecoder.withJwkSetUri(...).
+ * Este projeto usa as JWT Signing Keys assimétricas do Supabase (ES256),
+ * não o "JWT Secret" HS256 legado (confirmado inspecionando o header do
+ * token: {"alg":"ES256",...}). Por isso a validação usa o endpoint JWKS
+ * público do projeto — o Nimbus baixa e cacheia as chaves públicas e
+ * resolve o algoritmo automaticamente pelo "kid" no header do token.
+ *
+ * As roles (MASTER_ADMIN/OPERADOR) não vêm no JWT — são resolvidas por
+ * SupabaseJwtAuthenticationConverter a partir de perfis_funcionarios.
+ * @EnableMethodSecurity habilita @PreAuthorize nos controllers (RBAC).
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${supabase.jwt-secret}")
-    private String supabaseJwtSecret;
+    @Value("${supabase.url}")
+    private String supabaseUrl;
 
     @Value("${app.cors.allowed-origins}")
     private List<String> allowedOrigins;
+
+    private final SupabaseJwtAuthenticationConverter jwtAuthenticationConverter;
+
+    public SecurityConfig(SupabaseJwtAuthenticationConverter jwtAuthenticationConverter) {
+        this.jwtAuthenticationConverter = jwtAuthenticationConverter;
+    }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -54,19 +64,23 @@ public class SecurityConfig {
                 // Webhook do Supabase (protegido por segredo compartilhado no header)
                 .requestMatchers("/api/webhooks/**").permitAll()
                 .anyRequest().authenticated())
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
+                jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 
         return http.build();
     }
 
     @Bean
     JwtDecoder jwtDecoder() {
-        var secretKey = new SecretKeySpec(
-            supabaseJwtSecret.getBytes(StandardCharsets.UTF_8),
-            "HmacSHA256");
+        var jwkSetUri = supabaseUrl.replaceAll("/+$", "") + "/auth/v1/.well-known/jwks.json";
 
-        return NimbusJwtDecoder.withSecretKey(secretKey)
-            .macAlgorithm(MacAlgorithm.HS256)
+        // NimbusJwtDecoder.withJwkSetUri(...) só aceita RS256 por padrão,
+        // mesmo com o JWK Set contendo apenas chaves EC. Sem isto, o
+        // seletor de chave descarta a única chave disponível e todo token
+        // ES256 (o algoritmo real do Supabase aqui) é rejeitado com
+        // "Another algorithm expected, or no matching key(s) found".
+        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
+            .jwsAlgorithm(SignatureAlgorithm.ES256)
             .build();
     }
 

@@ -1,0 +1,14 @@
+@echo off
+REM Copie este arquivo para "run-local.bat" (sem o .example) e preencha os
+REM valores reais abaixo. run-local.bat está no .gitignore — nunca vai pro
+REM Git, pode deixar os segredos reais aqui sem risco de vazar no repositorio.
+
+set SUPABASE_DB_URL=jdbc:postgresql://db.hmtupicuapmmawprcdlk.supabase.co:5432/postgres
+set SUPABASE_DB_PASSWORD=COLE_AQUI_A_SENHA_DO_BANCO
+set SUPABASE_URL=https://hmtupicuapmmawprcdlk.supabase.co
+set SMTP_USERNAME=COLE_AQUI_SEU_EMAIL
+set SMTP_PASSWORD=COLE_AQUI_A_SENHA_DE_APP_DO_GMAIL
+set APP_APROVACAO_SECRET=COLE_AQUI_UMA_STRING_LONGA_ALEATORIA
+set APP_WEBHOOK_SECRET=COLE_AQUI_OUTRA_STRING_LONGA_ALEATORIA
+
+mvn spring-boot:run

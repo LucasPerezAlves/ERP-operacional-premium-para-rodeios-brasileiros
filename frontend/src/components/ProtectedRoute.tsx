@@ -6,13 +6,11 @@ import { LassoSpinner } from "./icons";
 /** Tela de transição temática enquanto a sessão é restaurada. */
 function TelaCarregando() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-wood-950 font-sans">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-arena-950 font-sans">
       <span className="text-gold-400">
         <LassoSpinner className="h-10 w-10" />
       </span>
-      <p className="text-sm uppercase tracking-[0.25em] text-leather-300">
-        Selando a montaria...
-      </p>
+      <p className="text-sm font-semibold text-leather-300">Selando a montaria...</p>
     </div>
   );
 }
