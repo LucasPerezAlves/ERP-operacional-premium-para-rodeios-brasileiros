@@ -1,57 +1,53 @@
-# Controle da Arena — Gestão Financeira de Rodeio
+# 🤠 Controle da Arena — Gestão Financeira de Rodeio
 
-Monorepo com **Java 21 + Spring Boot 3** (API) e **React 18 + TypeScript + Vite + Tailwind CSS** (UI), usando **Supabase** para autenticação e PostgreSQL.
+> **Auditoria blindada na gerência, velocidade máxima na operação.**
 
-> As regras de arquitetura e de negócio estão em [CLAUDE.md](CLAUDE.md).
+O **Controle da Arena** é um sistema de missão crítica projetado para gerenciar a complexa operação financeira e de pessoal durante eventos de grande porte. Desenvolvido para suportar o ritmo acelerado e a alta concorrência em pontos de venda físicos, o sistema garante o controle rígido de fluxo de caixa em tempo real, prevenção de fraudes e consolidação de valores em espécie para as operações da **Perez Prime Eventos**.
 
-## Estrutura
+As regras de arquitetura, padrões de projeto e diretrizes de domínio estão documentadas no nosso [CLAUDE.md](CLAUDE.md).
 
-```
-├── CLAUDE.md               # Stack oficial + regras de negócio
+---
+
+## 🏗️ Arquitetura e Tecnologias
+
+A aplicação adota uma arquitetura de Monorepo, separando as responsabilidades entre uma API robusta para transações financeiras e uma interface de usuário altamente reativa.
+
+**Back-end (API REST)**
+* **Linguagem:** Java 21 (aproveitando Virtual Threads para alta concorrência).
+* **Framework:** Spring Boot 3.
+* **Persistência:** Spring Data JPA.
+* **Segurança:** Spring Security com validação de JWT (HS256).
+* **Core Financeiro:** Uso estrito de `BigDecimal` para garantia de integridade monetária.
+
+**Front-end (UI/UX)**
+* **Core:** React 18 + TypeScript + Vite.
+* **Estilização:** Tailwind CSS focado no design system **"Rodeio Premium"** (tons de madeira profunda, couro desgastado e dourado fosco).
+* **Animações:** Transições fluidas e feedback visual imersivo (ex: partículas de poeira e laços giratórios), sem spinners genéricos.
+
+**Infraestrutura e Banco de Dados**
+* **Provider:** Supabase.
+* **Banco de Dados:** PostgreSQL (Transações ACID para fechamentos seguros).
+* **Autenticação:** Supabase Auth integrado com gatilhos (Triggers) de banco de dados.
+
+---
+
+## 📂 Estrutura do Monorepo
+
+```text
+├── CLAUDE.md               # Fonte da verdade: Stack oficial e regras de negócio
 ├── backend/                # API Spring Boot 3 (Java 21)
 │   ├── pom.xml
-│   ├── db/                 # Scripts SQL de referência (rodar no Supabase)
+│   ├── db/                 # Scripts SQL de referência (DDL, Triggers, Roles)
 │   └── src/main/java/com/arena/rodeio/
-│       ├── config/         # Spring Security (JWT do Supabase) + CORS
-│       ├── controller/     # REST /api/funcionarios
-│       ├── dto/            # Records imutáveis (BigDecimal para dinheiro)
-│       ├── model/          # Entidades JPA
-│       ├── repository/     # Spring Data JPA
-│       └── service/        # Regras de negócio
-└── frontend/               # React + TS + Vite
-    └── src/
-        ├── lib/supabase.ts # Cliente @supabase/supabase-js
-        └── pages/AuthPage.tsx  # Login/Cadastro (raiz "/", sem landing page)
-```
-
-## Módulo 1 — Autenticação e Gestão de Funcionários
-
-- Tela de Login/Cadastro com tema **Rodeio Premium** (madeira, couro, dourado fosco; loading com laço girando, poeira da arena animada)
-- Autenticação via Supabase (`signInWithPassword` / `signUp`)
-- API protegida por Spring Security validando o JWT do Supabase (HS256)
-- CRUD de funcionários com cargo, limite de sangria (`BigDecimal`) e desativação lógica
-
-## Como rodar
-
-### Pré-requisitos
-- JDK 21+ e Maven 3.9+
-- Node.js 18+
-- Projeto no [Supabase](https://supabase.com) com Email auth habilitado
-- Executar `backend/db/001_funcionarios.sql` no SQL Editor do Supabase
-
-### Back-end
-
-```bash
-cd backend
-# Variáveis: SUPABASE_DB_URL, SUPABASE_DB_PASSWORD, SUPABASE_JWT_SECRET
-mvn spring-boot:run     # http://localhost:8080
-```
-
-### Front-end
-
-```bash
-cd frontend
-cp .env.example .env    # preencher VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY
-npm install
-npm run dev             # http://localhost:5173
-```
+│       ├── config/         # Interceptadores Spring Security (JWT Supabase) + CORS
+│       ├── controller/     # Endpoints REST (ex: /api/auth, /api/caixa)
+│       ├── dto/            # Records imutáveis para transferência de dados
+│       ├── model/          # Entidades JPA mapeadas
+│       ├── repository/     # Interfaces Spring Data JPA
+│       └── service/        # Lógica central e validações de regras de negócio
+└── frontend/               # SPA React + TS + Vite
+    ├── src/
+    │   ├── lib/            # Configuração do cliente @supabase/supabase-js
+    │   ├── components/     # Componentes reutilizáveis (Inputs, Botões, Cards temáticos)
+    │   ├── pages/          # Rotas principais (AuthPage, AdminDashboard, OperadorDashboard)
+    │   └── routes/         # Guardiões de rotas (ProtectedRoute e controle RBAC)
