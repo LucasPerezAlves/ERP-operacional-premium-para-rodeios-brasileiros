@@ -1,6 +1,3 @@
--- Módulo 1: tabela de funcionários
--- Executar no Supabase (SQL Editor). Migrations automatizadas virão no módulo 2.
-
 create table if not exists public.funcionarios (
     id              uuid primary key default gen_random_uuid(),
     auth_user_id    uuid unique references auth.users (id),

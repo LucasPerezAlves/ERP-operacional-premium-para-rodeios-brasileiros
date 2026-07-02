@@ -36,6 +36,11 @@ sangrias e prestação de contas em tempo real, operando em ambiente de rede ins
 4. UI consistente com o tema Rodeio Premium em todas as telas (sem spinners
    genéricos — usar as animações temáticas: laço girando, poeira da arena,
    ferradura pulsando).
+5. **Aprovação de Gerência obrigatória.** Nenhum funcionário acessa o sistema
+   sem `status_aprovacao = APROVADO` em `perfis_funcionarios`. Todo cadastro
+   nasce `PENDENTE` (trigger em `auth.users`), dispara e-mail para a gerência
+   com link assinado (HMAC) "Aprovar Peão", e o front-end força `signOut` no
+   login de quem ainda não foi aprovado.
 
 ## Regras de Negócio do Domínio
 
@@ -68,6 +73,51 @@ RFID: recarga numa Central de Caixa e débito do saldo na venda.
 Emissão de passe livre exige **Motivo** (Staff, Convidado do Patrocinador,
 Sorteio, Fornecedor) e **Autorizador** obrigatórios. O painel do Admin destaca
 quem mais emitiu cortesias na noite.
+
+## Backlog de Funcionalidades — Painéis (RBAC)
+
+Ideias de produto para os painéis `OPERADOR` e `MASTER_ADMIN`, a implementar dentro
+dos módulos 2–4 do roadmap (não são módulos novos, são features desses painéis).
+
+### Painel do Operador
+
+1. **Calculadora de Troco Inteligente** — o operador digita o valor pago pelo
+   cliente (em cédulas) e o valor da venda; o sistema calcula o troco. Cálculo
+   em `BigDecimal` (regra inegociável nº 1).
+2. **Bip de Confirmação por Áudio Dinâmico** — cada ação crítica (venda
+   concluída, sangria solicitada, ponto batido) emite um som curto e distinto
+   (estalo/metálico); erros emitem som grave e longo. Reforça o tema Rodeio
+   Premium sem depender de leitura de tela em ambiente barulhento.
+3. **Lançamento Rápido Combinado (Combo-Click)** — botões pré-configurados por
+   posto (ex.: portaria: "1 ingresso Rodeio", "1 ingresso Baile", "1
+   estacionamento", "Rodeio + estacionamento (desconto)") para venda em um
+   clique, sem digitar valores.
+4. **Botão de Pânico de Caixa ("SOS")** — botão discreto que abre uma tela de
+   categorias (Troco / Problema na máquina / Mais gente / Confusão). Se a
+   categoria for Troco, o operador seleciona dinamicamente quais notas precisa
+   (ex.: "preciso de notas de R$ 5,00"). Dispara alerta em tempo real no painel
+   do Admin — elo direto com o item "Alertas em Tempo Real" abaixo.
+
+### Painel do Master Admin
+
+1. **Alertas em Tempo Real (recebe o SOS do Operador)** — alerta piscando por
+   caixa/posto com a categoria e o detalhe (ex.: "Caixa 2 (Estacionamento)
+   precisa de notas de R$ 5,00"). Evita que o operador abandone o posto ou
+   grite no meio do evento para chamar a gerência.
+2. **Gráfico de Velocidade de Sangria (Previsão de Cofre)** — analisa o ritmo
+   de vendas em dinheiro por bar/posto e classifica em tempo real: "Bar muito
+   movimentado" / "Bar mediano" / "Bar parado".
+3. **Histórico de Divergência de Peão (Scorecard de Operadores)** — relatório
+   do histórico de sobra/falta de cada funcionário ao longo dos dias do
+   evento; padrão recorrente de falta (ex.: sempre R$ 20 ou R$ 50) gera alerta
+   para acompanhamento daquele operador/posto.
+4. **Gestão de Fornecedores e Comitivas (Rateio de Lucro)** — cadastro de alas
+   terceirizadas (ex.: parque de diversões, barracas) com taxa de comissão
+   configurável (ex.: 15%); repasse calculado automaticamente no fechamento do
+   dia.
+5. **Dashboard de Custo de Funcionário em Tempo Real** — custo acumulado da
+   equipe ativa durante o evento (ex.: "15 funcionários ativos, custo da hora
+   corrente: R$ 450,00"), calculado a partir do registro de ponto.
 
 ## Como Rodar
 

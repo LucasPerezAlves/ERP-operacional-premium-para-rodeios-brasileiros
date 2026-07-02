@@ -1,9 +1,12 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   configurationError,
   getSupabase,
   isSupabaseConfigured,
 } from "../lib/supabase";
+import { rotaDoPerfil, useAuth, type PerfilAcesso } from "../lib/auth";
+import { HorseshoeIcon, LassoSpinner } from "../components/icons";
 
 // ---------------------------------------------------------------------------
 // Tipos do estado de autenticação
@@ -11,16 +14,12 @@ import {
 
 type AuthMode = "login" | "register";
 
-interface UserInfo {
-  id: string;
-  email: string;
-}
-
 type AuthStatus =
   | { kind: "idle" }
   | { kind: "loading" }
   | { kind: "failed"; message: string }
-  | { kind: "authenticated"; user: UserInfo };
+  // Cadastro enviado, aguardando Aprovação de Gerência
+  | { kind: "registered" };
 
 interface FieldErrors {
   fullName?: string;
@@ -96,55 +95,6 @@ function friendlyError(raw: string): string {
 // ---------------------------------------------------------------------------
 // Peças visuais temáticas
 // ---------------------------------------------------------------------------
-
-/** Corda de laço girando: círculo de corda aberto com ponta solta. */
-function LassoSpinner() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 animate-lasso-spin" aria-hidden>
-      <circle
-        cx={12}
-        cy={12}
-        r={8}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeDasharray="36 14"
-      />
-      {/* Ponta solta da corda */}
-      <path
-        d="M 18.5 17.5 Q 22 19.5 20.5 22.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-/** Ferradura pulsando: estado autenticado. */
-function HorseshoeIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-12 w-12 animate-horseshoe-pulse text-gold-400"
-      aria-hidden
-    >
-      <path
-        d="M7.5 21 C4 16.5 3.5 9.5 7 6 C9.5 3.8 14.5 3.8 17 6 C20.5 9.5 20 16.5 16.5 21"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2.2}
-        strokeLinecap="round"
-      />
-      <circle cx={6.4} cy={12} r={0.9} fill="currentColor" />
-      <circle cx={8.2} cy={7.4} r={0.9} fill="currentColor" />
-      <circle cx={17.6} cy={12} r={0.9} fill="currentColor" />
-      <circle cx={15.8} cy={7.4} r={0.9} fill="currentColor" />
-    </svg>
-  );
-}
 
 /** Partículas de poeira: [left %, tamanho px, atraso s, duração s] */
 const dustSpecs: Array<[number, number, number, number]> = [
@@ -373,19 +323,25 @@ function ModeSwitcher({
   );
 }
 
-/** Estado autenticado: porteira aberta. */
-function AuthenticatedView({ user }: { user: UserInfo }) {
+/** Pós-cadastro: aguardando a Aprovação de Gerência. */
+function RegisteredView({ onBackToLogin }: { onBackToLogin: () => void }) {
   return (
     <div className="flex flex-col items-center gap-4 py-8 text-center animate-fade-in-up">
       <HorseshoeIcon />
-      <h2 className="font-display text-2xl text-gold-300">Porteira aberta!</h2>
+      <h2 className="font-display text-2xl text-gold-300">Cadastro enviado!</h2>
       <p className="text-leather-200">
-        Bem-vindo à arena,{" "}
-        <span className="font-semibold text-gold-200">{user.email}</span>.
+        Aguarde a gerência aprovar sua entrada na arena.
       </p>
       <p className="text-sm text-leather-400">
-        Se este for um cadastro novo, confirme o e-mail antes do primeiro login.
+        Você poderá entrar assim que a porteira for liberada.
       </p>
+      <button
+        type="button"
+        onClick={onBackToLogin}
+        className="mt-2 rounded-lg border border-gold-500/60 px-6 py-3 text-sm font-semibold uppercase tracking-wider text-gold-300 transition-colors duration-200 hover:border-gold-400 hover:bg-gold-400/10 hover:text-gold-200"
+      >
+        Voltar para o Login
+      </button>
     </div>
   );
 }
@@ -395,6 +351,9 @@ function AuthenticatedView({ user }: { user: UserInfo }) {
 // ---------------------------------------------------------------------------
 
 export default function AuthPage() {
+  const navigate = useNavigate();
+  const { perfil } = useAuth();
+
   const [mode, setMode] = useState<AuthMode>("login");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -405,6 +364,13 @@ export default function AuthPage() {
   const [status, setStatus] = useState<AuthStatus>({ kind: "idle" });
 
   const isLoading = status.kind === "loading";
+
+  // Sessão já ativa e aprovada (ex.: F5 ou retorno ao site) → direto ao painel
+  useEffect(() => {
+    if (perfil && perfil.statusAprovacao === "APROVADO") {
+      navigate(rotaDoPerfil(perfil.perfilAcesso), { replace: true });
+    }
+  }, [perfil, navigate]);
 
   function switchMode(next: AuthMode) {
     setMode(next);
@@ -438,13 +404,27 @@ export default function AuthPage() {
       const supabase = getSupabase();
       const credentials = { email: email.trim(), password };
 
-      const { data, error } =
-        mode === "login"
-          ? await supabase.auth.signInWithPassword(credentials)
-          : await supabase.auth.signUp({
-              ...credentials,
-              options: { data: { full_name: fullName.trim() } },
-            });
+      if (mode === "register") {
+        const { error } = await supabase.auth.signUp({
+          ...credentials,
+          options: { data: { full_name: fullName.trim() } },
+        });
+
+        if (error) {
+          setStatus({ kind: "failed", message: friendlyError(error.message) });
+          return;
+        }
+
+        // Mesmo que o Supabase abra sessão no cadastro, o acesso só vale
+        // após a Aprovação de Gerência — garante que ninguém fica logado.
+        await supabase.auth.signOut();
+        setStatus({ kind: "registered" });
+        setPassword("");
+        setConfirmPassword("");
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword(credentials);
 
       if (error) {
         setStatus({ kind: "failed", message: friendlyError(error.message) });
@@ -459,12 +439,32 @@ export default function AuthPage() {
         return;
       }
 
-      setStatus({
-        kind: "authenticated",
-        user: { id: data.user.id, email: data.user.email ?? "" },
-      });
+      // Senha correta não basta: o perfil precisa estar APROVADO pela gerência.
+      const { data: dadosPerfil, error: perfilError } = await supabase
+        .from("perfis_funcionarios")
+        .select("status_aprovacao, perfil_acesso")
+        .eq("id", data.user.id)
+        .single();
+
+      const statusAprovacao: string | undefined = dadosPerfil?.status_aprovacao;
+
+      if (perfilError || statusAprovacao !== "APROVADO") {
+        await supabase.auth.signOut();
+        setStatus({
+          kind: "failed",
+          message:
+            statusAprovacao === "REJEITADO"
+              ? "Seu cadastro foi recusado pela gerência."
+              : "Sua entrada ainda não foi autorizada pela gerência.",
+        });
+        return;
+      }
+
+      // RBAC: cada nível de acesso tem o seu painel.
+      const perfilAcesso = (dadosPerfil?.perfil_acesso ?? "OPERADOR") as PerfilAcesso;
       setPassword("");
       setConfirmPassword("");
+      navigate(rotaDoPerfil(perfilAcesso), { replace: true });
     } catch (exception) {
       const message =
         exception instanceof Error ? exception.message : String(exception);
@@ -474,8 +474,8 @@ export default function AuthPage() {
 
   let cardContent: ReactNode;
 
-  if (status.kind === "authenticated") {
-    cardContent = <AuthenticatedView user={status.user} />;
+  if (status.kind === "registered") {
+    cardContent = <RegisteredView onBackToLogin={() => switchMode("login")} />;
   } else {
     cardContent = (
       <>

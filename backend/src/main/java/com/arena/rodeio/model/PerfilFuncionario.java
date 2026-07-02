@@ -8,54 +8,49 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 /**
- * Funcionário do evento. O login administrativo (e-mail/senha) vive no
- * Supabase Auth; esta entidade guarda o perfil operacional e é ligada ao
- * usuário do Supabase pelo {@code authUserId} (claim "sub" do JWT).
+ * Perfil operacional do funcionário, 1:1 com auth.users do Supabase
+ * (a PK é o próprio id do usuário no Supabase Auth).
+ *
+ * A LINHA É CRIADA PELA TRIGGER do banco (002_perfis_funcionarios.sql) no
+ * momento do cadastro — o back-end apenas lê e atualiza, nunca insere.
  *
  * REGRA INEGOCIÁVEL: valores monetários são sempre BigDecimal / NUMERIC(12,2).
  */
 @Entity
-@Table(name = "funcionarios")
-public class Funcionario {
+@Table(name = "perfis_funcionarios")
+public class PerfilFuncionario {
 
+    /** Mesmo id de auth.users (claim "sub" do JWT). */
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    /** Claim "sub" do JWT do Supabase (auth.users.id). Nulo até o convite ser aceito. */
-    @Column(name = "auth_user_id", unique = true)
-    private UUID authUserId;
-
-    @NotBlank
     @Column(name = "nome_completo", nullable = false)
     private String nomeCompleto;
 
-    @NotBlank
-    @Email
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private CargoFuncionario cargo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_aprovacao", nullable = false, length = 10)
+    private StatusAprovacao statusAprovacao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "perfil_acesso", nullable = false, length = 20)
+    private PerfilAcesso perfilAcesso;
 
     /**
      * Limite de dinheiro em espécie que o operador pode acumular antes de o
      * sistema exigir uma Sangria (regra de negócio nº 2).
      */
-    @NotNull
     @Column(name = "limite_sangria", nullable = false, precision = 12, scale = 2)
     private BigDecimal limiteSangria;
 
@@ -75,25 +70,8 @@ public class Funcionario {
     @Column(name = "atualizado_em", nullable = false)
     private Instant atualizadoEm;
 
-    protected Funcionario() {
+    protected PerfilFuncionario() {
         // exigido pelo JPA
-    }
-
-    public Funcionario(String nomeCompleto,
-                       String email,
-                       CargoFuncionario cargo,
-                       BigDecimal limiteSangria) {
-        this.nomeCompleto = nomeCompleto;
-        this.email = email;
-        this.cargo = cargo;
-        this.limiteSangria = limiteSangria;
-    }
-
-    @PrePersist
-    void aoCriar() {
-        var agora = Instant.now();
-        this.criadoEm = agora;
-        this.atualizadoEm = agora;
     }
 
     @PreUpdate
@@ -105,14 +83,6 @@ public class Funcionario {
 
     public UUID getId() {
         return id;
-    }
-
-    public UUID getAuthUserId() {
-        return authUserId;
-    }
-
-    public void setAuthUserId(UUID authUserId) {
-        this.authUserId = authUserId;
     }
 
     public String getNomeCompleto() {
@@ -127,16 +97,28 @@ public class Funcionario {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     public CargoFuncionario getCargo() {
         return cargo;
     }
 
     public void setCargo(CargoFuncionario cargo) {
         this.cargo = cargo;
+    }
+
+    public StatusAprovacao getStatusAprovacao() {
+        return statusAprovacao;
+    }
+
+    public void setStatusAprovacao(StatusAprovacao statusAprovacao) {
+        this.statusAprovacao = statusAprovacao;
+    }
+
+    public PerfilAcesso getPerfilAcesso() {
+        return perfilAcesso;
+    }
+
+    public void setPerfilAcesso(PerfilAcesso perfilAcesso) {
+        this.perfilAcesso = perfilAcesso;
     }
 
     public BigDecimal getLimiteSangria() {
