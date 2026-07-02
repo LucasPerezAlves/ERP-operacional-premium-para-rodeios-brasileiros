@@ -1,0 +1,21 @@
+# Java / Maven (backend)
+backend/target/
+*.class
+
+# Node / Vite (frontend)
+frontend/node_modules/
+frontend/dist/
+
+# Segredos
+.env
+.env.local
+frontend/.env
+frontend/.env.local
+
+# IDE / SO
+.idea/
+.vs/
+.vscode/
+*.iml
+*.user
+Thumbs.db

@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: theme("colors.gold.500");
+    color: theme("colors.wood.950");
+  }
+}
+
+/* Usuários que preferem menos movimento: desliga as animações decorativas */
+@media (prefers-reduced-motion: reduce) {
+  .animate-dust-rise,
+  .animate-spotlight-flicker,
+  .animate-horseshoe-pulse {
+    animation: none;
+  }
+}
