@@ -45,8 +45,10 @@ Configurações). O fluxo do OPERADOR não é afetado.
 </Route>
 ```
 
-O `DashboardLayout` atual permanece servindo apenas o Operador (pode ser
-simplificado: os ramos `ehAdmin` viram código morto e são removidos).
+O `DashboardLayout` atual permanece **intocado**: além do Operador, o
+MASTER_ADMIN pode acessar `/operador-dashboard` (as rotas do operador aceitam
+os dois perfis), então os ramos `ehAdmin` — brasão e toasts SOS — continuam
+vivos nessas telas. Nenhuma simplificação nesta sprint.
 
 ### Novos arquivos
 
@@ -71,8 +73,8 @@ simplificado: os ramos `ehAdmin` viram código morto e são removidos).
   `frontend/src/pages/AdminScorecard.tsx` — removem `<DashboardLayout>` e o
   link "Voltar ao painel" (a sidebar assume a navegação); cada página passa a
   exibir o próprio título como heading visível.
-- `frontend/src/components/DashboardLayout.tsx` — simplificado para
-  Operador-only (remove ramos `ehAdmin`, brasão e badge SOS de admin).
+- `frontend/src/components/DashboardLayout.tsx` — **sem alteração** (ver
+  justificativa acima: Admin ainda o usa nas rotas do operador).
 
 ## Anatomia da sidebar (conceito: porteira de curral)
 
