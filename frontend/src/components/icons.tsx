@@ -381,3 +381,20 @@ export function BackspaceIcon({ className = "h-5 w-5" }: { className?: string })
     </svg>
   );
 }
+
+/** Moeda com cifrão — ação de configurar valor/hora (VALORES). */
+export function CifraoIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
+      <circle cx={12} cy={12} r={8.5} stroke="currentColor" strokeWidth={1.8} />
+      <path
+        d="M14.5 9.3c0-1-.9-1.8-2.5-1.8s-2.7.8-2.7 1.9c0 2.7 5.4 1.3 5.4 4 0 1.1-1.1 1.9-2.7 1.9s-2.7-.8-2.7-1.9"
+        stroke="currentColor"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M12 6v1.3M12 16.7V18" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />
+    </svg>
+  );
+}
