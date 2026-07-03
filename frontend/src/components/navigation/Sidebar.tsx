@@ -134,6 +134,9 @@ function RodapeUsuario({ recolhida }: { recolhida: boolean }) {
       }`}
     >
       <div className={`flex items-center gap-3 ${recolhida ? "justify-center" : ""}`}>
+        {/* fotoUrl fixo em null: PerfilUsuario (lib/auth.tsx) ainda não expõe
+            foto_url — ligar isso exige estender buscarPerfil, fora do escopo
+            desta feature. Até lá, o rodapé sempre mostra a silhueta. */}
         <Avatar nome={nome} fotoUrl={null} />
         {!recolhida && (
           <div className="min-w-0 flex-1">
