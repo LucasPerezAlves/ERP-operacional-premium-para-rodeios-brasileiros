@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { CategoriaSos, SosStatus } from "../../hooks/useCaixa";
+import type { SosStatus } from "../../hooks/useCaixa";
+import type { CategoriaSos } from "../../lib/sos";
 import { CheckIcon, LampiaoIcon } from "../icons";
 import Botao from "../ui/Botao";
 import Modal from "../ui/Modal";

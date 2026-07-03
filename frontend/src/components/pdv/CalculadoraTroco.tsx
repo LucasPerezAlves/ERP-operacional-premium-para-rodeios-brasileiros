@@ -2,6 +2,7 @@ import { useState } from "react";
 import { formatarCentavos } from "../../lib/moeda";
 import { SetaEsquerdaIcon } from "../icons";
 import Botao from "../ui/Botao";
+import ValorEditavel from "../ui/ValorEditavel";
 
 /** Cédulas físicas que o operador recebe na mão (backlog do Operador, item 1). */
 const CEDULAS = [1000, 2000, 5000, 10000] as const;
@@ -78,11 +79,13 @@ export default function CalculadoraTroco({
 
       {/* Recebido + TROCO gigante */}
       <div className="mt-6 rounded-xl border border-leather-600/40 bg-arena-800 p-6 text-center">
-        <p className="text-lg text-leather-300">
-          Recebido:{" "}
-          <span className="num-tabular font-bold text-leather-200">
-            {formatarCentavos(recebidoCentavos)}
-          </span>
+        <p className="flex flex-wrap items-baseline justify-center gap-1 text-lg text-leather-300">
+          Recebido:
+          <ValorEditavel
+            centavos={recebidoCentavos}
+            onAlterar={setRecebidoCentavos}
+            className="font-bold text-leather-200"
+          />
         </p>
         <p className="mt-2 text-xl font-semibold text-leather-300">Troco a devolver</p>
         <p

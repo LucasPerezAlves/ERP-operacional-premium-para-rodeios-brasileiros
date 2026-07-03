@@ -18,7 +18,8 @@ public record PerfilFuncionarioResponse(
     PerfilAcesso perfilAcesso,
     String areaTrabalho,
     String fotoUrl,
-    BigDecimal limiteSangria,
+    BigDecimal limiteAtencao,
+    BigDecimal limiteCritico,
     boolean ativo,
     Instant criadoEm,
     Instant atualizadoEm
@@ -34,7 +35,8 @@ public record PerfilFuncionarioResponse(
             perfil.getPerfilAcesso(),
             perfil.getAreaTrabalho(),
             perfil.getFotoUrl(),
-            perfil.getLimiteSangria(),
+            perfil.getLimiteAtencao(),
+            perfil.getLimiteCritico(),
             perfil.isAtivo(),
             perfil.getCriadoEm(),
             perfil.getAtualizadoEm());

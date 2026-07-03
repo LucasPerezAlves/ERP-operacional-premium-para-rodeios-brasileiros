@@ -56,11 +56,14 @@ public class PerfilFuncionario {
     private String fotoUrl;
 
     /**
-     * Limite de dinheiro em espécie que o operador pode acumular antes de o
-     * sistema exigir uma Sangria (regra de negócio nº 2).
+     * Limiares de espécie em caixa que escalam o NivelAlertaNumerario da
+     * gerência (regra de negócio nº 2). Nunca bloqueiam venda — só alertam.
      */
-    @Column(name = "limite_sangria", nullable = false, precision = 12, scale = 2)
-    private BigDecimal limiteSangria;
+    @Column(name = "limite_atencao", nullable = false, precision = 12, scale = 2)
+    private BigDecimal limiteAtencao;
+
+    @Column(name = "limite_critico", nullable = false, precision = 12, scale = 2)
+    private BigDecimal limiteCritico;
 
     /**
      * PIN de 4 dígitos para acesso rápido em terminais compartilhados
@@ -145,12 +148,20 @@ public class PerfilFuncionario {
         this.fotoUrl = fotoUrl;
     }
 
-    public BigDecimal getLimiteSangria() {
-        return limiteSangria;
+    public BigDecimal getLimiteAtencao() {
+        return limiteAtencao;
     }
 
-    public void setLimiteSangria(BigDecimal limiteSangria) {
-        this.limiteSangria = limiteSangria;
+    public void setLimiteAtencao(BigDecimal limiteAtencao) {
+        this.limiteAtencao = limiteAtencao;
+    }
+
+    public BigDecimal getLimiteCritico() {
+        return limiteCritico;
+    }
+
+    public void setLimiteCritico(BigDecimal limiteCritico) {
+        this.limiteCritico = limiteCritico;
     }
 
     public String getPinHash() {

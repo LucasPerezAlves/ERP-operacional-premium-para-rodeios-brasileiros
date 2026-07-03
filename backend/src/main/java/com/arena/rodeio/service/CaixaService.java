@@ -18,9 +18,11 @@ import com.arena.rodeio.dto.SangriaRequest;
 import com.arena.rodeio.dto.SangriaResponse;
 import com.arena.rodeio.model.Caixa;
 import com.arena.rodeio.model.FormaPagamento;
+import com.arena.rodeio.model.NivelAlertaNumerario;
 import com.arena.rodeio.model.Sangria;
 import com.arena.rodeio.model.StatusCaixa;
 import com.arena.rodeio.repository.CaixaRepository;
+import com.arena.rodeio.repository.PerfilFuncionarioRepository;
 import com.arena.rodeio.repository.SangriaRepository;
 import com.arena.rodeio.repository.VendaRepository;
 
@@ -30,13 +32,16 @@ public class CaixaService {
     private final CaixaRepository caixaRepository;
     private final VendaRepository vendaRepository;
     private final SangriaRepository sangriaRepository;
+    private final PerfilFuncionarioRepository perfilFuncionarioRepository;
 
     public CaixaService(CaixaRepository caixaRepository,
                         VendaRepository vendaRepository,
-                        SangriaRepository sangriaRepository) {
+                        SangriaRepository sangriaRepository,
+                        PerfilFuncionarioRepository perfilFuncionarioRepository) {
         this.caixaRepository = caixaRepository;
         this.vendaRepository = vendaRepository;
         this.sangriaRepository = sangriaRepository;
+        this.perfilFuncionarioRepository = perfilFuncionarioRepository;
     }
 
     /**
@@ -57,7 +62,7 @@ public class CaixaService {
         var saldoInicial = request.saldoInicial().setScale(2, RoundingMode.HALF_EVEN);
         var caixa = caixaRepository.save(new Caixa(operadorId, adminId, saldoInicial));
 
-        return CaixaResponse.from(caixa, saldoInicial);
+        return CaixaResponse.from(caixa, saldoInicial, avaliarNivelAlerta(operadorId, saldoInicial));
     }
 
     /**
@@ -105,14 +110,26 @@ public class CaixaService {
 
         caixa.fechar(valorFinal, request.motivo().trim());
 
-        return CaixaResponse.from(caixa, saldoEmEspecie);
+        return CaixaResponse.from(caixa, saldoEmEspecie, avaliarNivelAlerta(caixa.getOperadorId(), saldoEmEspecie));
     }
 
     /** Lista todos os caixas ABERTO — tela Gerenciamento de Equipe do Admin. */
     @Transactional(readOnly = true)
     public List<CaixaResponse> listarAbertos() {
         return caixaRepository.findByStatus(StatusCaixa.ABERTO).stream()
-            .map(caixa -> CaixaResponse.from(caixa, calcularSaldoEmEspecie(caixa)))
+            .map(this::paraResponse)
+            .toList();
+    }
+
+    /**
+     * Lista todos os caixas FECHADO, mais recentes primeiro — alimenta o
+     * Scorecard de Divergência (Master Admin backlog, item 3). Cada resposta
+     * já carrega a divergência (sobra/falta) travada no fechamento.
+     */
+    @Transactional(readOnly = true)
+    public List<CaixaResponse> listarFechados() {
+        return caixaRepository.findByStatusOrderByDataFechamentoDesc(StatusCaixa.FECHADO).stream()
+            .map(this::paraResponse)
             .toList();
     }
 
@@ -124,7 +141,24 @@ public class CaixaService {
     @Transactional(readOnly = true)
     public Optional<CaixaResponse> buscarMeuCaixaAberto(UUID operadorId) {
         return caixaRepository.findByOperadorIdAndStatus(operadorId, StatusCaixa.ABERTO)
-            .map(caixa -> CaixaResponse.from(caixa, calcularSaldoEmEspecie(caixa)));
+            .map(this::paraResponse);
+    }
+
+    private CaixaResponse paraResponse(Caixa caixa) {
+        var saldoEmEspecie = calcularSaldoEmEspecie(caixa);
+        return CaixaResponse.from(caixa, saldoEmEspecie, avaliarNivelAlerta(caixa.getOperadorId(), saldoEmEspecie));
+    }
+
+    /**
+     * Regra de negócio nº 2 (revisada): escala o alerta de numerário contra
+     * os limiares configuráveis por operador — nunca bloqueia venda, apenas
+     * informa a gerência para decidir a sangria (regra inegociável nº 7).
+     */
+    public NivelAlertaNumerario avaliarNivelAlerta(UUID operadorId, BigDecimal saldoEmEspecie) {
+        return perfilFuncionarioRepository.findById(operadorId)
+            .map(perfil -> NivelAlertaNumerario.avaliar(
+                saldoEmEspecie, perfil.getLimiteAtencao(), perfil.getLimiteCritico()))
+            .orElse(NivelAlertaNumerario.NORMAL);
     }
 
     /**

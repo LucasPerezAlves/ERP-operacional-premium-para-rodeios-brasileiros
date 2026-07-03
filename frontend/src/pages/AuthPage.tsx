@@ -19,13 +19,13 @@ import {
   CameraIcon,
   EyeIcon,
   EyeOffIcon,
-  HorseshoeIcon,
   LockIcon,
   MailIcon,
   UserIcon,
 } from "../components/icons";
 import Alerta from "../components/ui/Alerta";
 import Botao from "../components/ui/Botao";
+import { SucessoOperacional } from "../components/ui/interacoes";
 
 /** Postos do evento — usados pelo Admin para localizar o operador (backlog). */
 const AREAS_TRABALHO = [
@@ -483,10 +483,20 @@ function ModeSwitcher({
         aria-hidden
         className={`absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-md bg-gradient-to-b from-gold-400 to-gold-600 shadow-spotlight transition-transform duration-300 ease-label ${pillPosition}`}
       />
-      <button type="button" className={tabClass(mode === "login")} onClick={() => onSwitch("login")}>
+      <button
+        type="button"
+        aria-pressed={mode === "login"}
+        className={tabClass(mode === "login")}
+        onClick={() => onSwitch("login")}
+      >
         Entrar
       </button>
-      <button type="button" className={tabClass(mode === "register")} onClick={() => onSwitch("register")}>
+      <button
+        type="button"
+        aria-pressed={mode === "register"}
+        className={tabClass(mode === "register")}
+        onClick={() => onSwitch("register")}
+      >
         Cadastro
       </button>
     </div>
@@ -496,13 +506,13 @@ function ModeSwitcher({
 /** Pós-cadastro: aguardando a Aprovação de Gerência. */
 function RegisteredView({ onBackToLogin }: { onBackToLogin: () => void }) {
   return (
-    <div className="flex flex-col items-center gap-4 py-8 text-center animate-fade-in-up">
-      <HorseshoeIcon className="h-12 w-12 animate-horseshoe-pulse text-gold-400" />
-      <h2 className="font-display text-2xl text-gold-300">Cadastro enviado!</h2>
-      <p className="text-leather-300">Aguarde a gerência aprovar sua entrada na arena.</p>
-      <p className="text-sm text-steel-400">
-        Você poderá entrar assim que a porteira for liberada.
-      </p>
+    <div className="flex flex-col items-center gap-4 py-8">
+      <SucessoOperacional titulo="Cadastro enviado!">
+        <p className="mt-2 text-leather-300">Aguarde a gerência aprovar sua entrada na arena.</p>
+        <p className="mt-1 text-sm text-steel-400">
+          Você poderá entrar assim que a porteira for liberada.
+        </p>
+      </SucessoOperacional>
       <Botao variante="couro" tamanho="lg" className="mt-2" onClick={onBackToLogin}>
         Voltar para o Login
       </Botao>

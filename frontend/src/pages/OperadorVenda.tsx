@@ -6,15 +6,12 @@ import SosGerencia from "../components/pdv/SosGerencia";
 import { useCaixa, type VendaConcluida } from "../hooks/useCaixa";
 import { formatarCentavos } from "../lib/moeda";
 import type { FormaPagamento } from "../lib/api";
-import {
-  BackspaceIcon,
-  HorseshoeIcon,
-  LassoSpinner,
-  SetaEsquerdaIcon,
-} from "../components/icons";
+import { BackspaceIcon, SetaEsquerdaIcon } from "../components/icons";
 import Alerta from "../components/ui/Alerta";
 import Botao from "../components/ui/Botao";
 import SeloCaixa from "../components/ui/SeloCaixa";
+import SeloNumerario from "../components/ui/SeloNumerario";
+import { Carregando, SucessoOperacional } from "../components/ui/interacoes";
 
 // ---------------------------------------------------------------------------
 // Lançamento Rápido (Combo-Click): atalhos do posto. Ficam no front até o
@@ -65,7 +62,6 @@ export default function OperadorVenda() {
     enviando,
     erro,
     limparErro,
-    alertaSangriaAtivo,
     sosStatus,
     vender,
     chamarGerencia,
@@ -98,12 +94,7 @@ export default function OperadorVenda() {
   if (carregandoStatus) {
     return (
       <DashboardLayout titulo="Vender">
-        <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-          <span className="text-gold-400">
-            <LassoSpinner className="h-10 w-10" />
-          </span>
-          <p className="text-sm font-semibold text-leather-300">Consultando seu caixa...</p>
-        </div>
+        <Carregando rotulo="Consultando seu caixa..." />
       </DashboardLayout>
     );
   }
@@ -132,7 +123,10 @@ export default function OperadorVenda() {
       <div className="select-none">
         {/* Barra de status do caixa */}
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-leather-600/40 bg-wood-900 px-6 py-4 shadow-arena">
-          <SeloCaixa aberto saldoCentavos={undefined} />
+          <div className="flex flex-wrap items-center gap-3">
+            <SeloCaixa aberto saldoCentavos={undefined} />
+            <SeloNumerario nivel={caixa.nivelAlerta} />
+          </div>
           <div className="rounded-lg bg-arena-800 px-4 py-2 text-right">
             <p className="text-xs text-leather-400">Em espécie</p>
             <p className="num-tabular text-2xl font-bold text-gold-200">
@@ -140,17 +134,6 @@ export default function OperadorVenda() {
             </p>
           </div>
         </div>
-
-        {/* Alerta de sangria: bloqueia DINHEIRO até a gerência recolher */}
-        {alertaSangriaAtivo && (
-          <Alerta tipo="aviso" className="mt-4">
-            <span className="font-display text-lg text-gold-300">
-              Limite de dinheiro atingido!
-            </span>{" "}
-            Vendas em dinheiro bloqueadas — acione o SOS para a gerência
-            recolher a sangria. Cartão e Pix continuam liberados.
-          </Alerta>
-        )}
 
         <div className="mt-6">
           {etapa.nome === "vitrine" && (
@@ -223,8 +206,7 @@ export default function OperadorVenda() {
               {/* Formas de pagamento — ação final, botões largos */}
               <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
                 {FORMAS.map((forma) => {
-                  const bloqueada = forma.valor === "DINHEIRO" && alertaSangriaAtivo;
-                  const desabilitada = itens.length === 0 || enviando || bloqueada;
+                  const desabilitada = itens.length === 0 || enviando;
 
                   if (forma.valor === "DINHEIRO") {
                     return (
@@ -269,14 +251,14 @@ export default function OperadorVenda() {
           )}
 
           {etapa.nome === "concluida" && (
-            <div className="mx-auto max-w-2xl text-center animate-fade-in-up">
-              {/* Sucesso = ferradura dourada (nunca verde de SaaS) */}
-              <HorseshoeIcon className="mx-auto h-14 w-14 animate-ferradura-acende text-gold-400" />
-              <p className="mt-3 font-display text-3xl text-gold-300">Venda registrada</p>
-              <p className="num-tabular mt-2 text-xl text-leather-300">
-                {formatarCentavos(etapa.venda.valorCentavos)} em{" "}
-                {etapa.venda.formaPagamento.toLowerCase()}
-              </p>
+            <div className="mx-auto max-w-2xl">
+              {/* Sucesso = ferradura dourada + varredura metálica (nunca verde de SaaS) */}
+              <SucessoOperacional titulo="Venda registrada">
+                <p className="num-tabular mt-2 text-xl text-leather-300">
+                  {formatarCentavos(etapa.venda.valorCentavos)} em{" "}
+                  {etapa.venda.formaPagamento.toLowerCase()}
+                </p>
+              </SucessoOperacional>
 
               {etapa.venda.trocoCentavos !== null && (
                 <div className="material-rotulo mt-6 rounded-xl bg-arena-900 p-8">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { formatarCentavos } from "../../lib/moeda";
 import Botao from "../ui/Botao";
+import ValorEditavel from "../ui/ValorEditavel";
 
 const FUNDOS_RAPIDOS = [5000, 10000, 20000, 30000] as const;
 const AJUSTES = [1000, 5000] as const;
@@ -26,11 +27,14 @@ export default function AberturaCaixa({
         Quanto de troco este caixa vai levar para a arena?
       </p>
 
-      {/* Valor escolhido — dígitos tabulares: legível e sem tremor */}
+      {/* Valor escolhido — dígitos tabulares: legível e sem tremor.
+          Toque no valor para digitar um valor exato (valores quebrados). */}
       <div className="mt-6 rounded-lg bg-arena-800 px-6 py-5">
-        <p className="num-tabular text-center text-6xl font-bold tracking-tight text-leather-200 md:text-7xl">
-          {formatarCentavos(saldoCentavos)}
-        </p>
+        <ValorEditavel
+          centavos={saldoCentavos}
+          onAlterar={setSaldoCentavos}
+          className="w-full text-6xl font-bold tracking-tight text-leather-200 md:text-7xl"
+        />
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">

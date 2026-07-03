@@ -253,6 +253,70 @@ export function LivroCaixaIcon({ className = "h-5 w-5" }: { className?: string }
   );
 }
 
+/** Malote de couro — sangria (tabela de feedback visual). */
+export function MaloteIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
+      <path
+        d="M9.5 6.5L7 10c-1.9 2-3 4.1-3 6 0 3.1 3.2 5 8 5s8-1.9 8-5c0-1.9-1.1-4-3-6l-2.5-3.5"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <path d="M8.5 6.5h7" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+      <path d="M9.5 6.5V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.5" stroke="currentColor" strokeWidth={1.8} />
+      <path
+        d="M12 12.5v4M10.3 13.6h2.6a1.1 1.1 0 0 1 0 2.2h-1.8a1.1 1.1 0 0 0 0 2.2h2.6"
+        stroke="currentColor"
+        strokeWidth={1.4}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/** Lâmpada de aviso — indicador de erro (estática, nunca pisca). */
+export function LampadaIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
+      <path
+        d="M7.5 14a4.5 4.5 0 0 1 9 0"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+      <path
+        d="M6.5 14h11v2.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1V14z"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 5.5v2M6.5 7.5l1.4 1.4M17.5 7.5l-1.4 1.4"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+      <path d="M9 20.5h6" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Fivela de ajuste — configuração/edição (limiares, preferências). */
+export function AjusteIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
+      <circle cx={12} cy={12} r={3.2} stroke="currentColor" strokeWidth={1.8} />
+      <path
+        d="M12 3.5v2.4M12 18.1v2.4M20.5 12h-2.4M5.9 12H3.5M17.7 6.3l-1.7 1.7M8 15.7l-1.7 1.7M17.7 17.7l-1.7-1.7M8 8 6.3 6.3"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 /** Confirmação — substitui o glifo "✓". */
 export function CheckIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (

@@ -1,42 +1,81 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import DashboardLayout from "../components/DashboardLayout";
 import OperadorCard from "../components/equipe/OperadorCard";
 import FecharCaixaModal from "../components/equipe/FecharCaixaModal";
+import SangriaModal from "../components/equipe/SangriaModal";
+import EditarLimitesModal from "../components/equipe/EditarLimitesModal";
 import {
   useGerenciamentoEquipe,
   type DadosFechamento,
+  type DadosLimites,
   type Operador,
 } from "../hooks/useGerenciamentoEquipe";
-import { LassoSpinner, LivroCaixaIcon, SearchIcon, SetaEsquerdaIcon } from "../components/icons";
+import { LivroCaixaIcon, SearchIcon } from "../components/icons";
 import Alerta from "../components/ui/Alerta";
+import Avatar from "../components/ui/Avatar";
 import Botao from "../components/ui/Botao";
 import Modal from "../components/ui/Modal";
+import { Carregando, MaloteSangria } from "../components/ui/interacoes";
+import FiltroArea from "../components/ui/FiltroArea";
+import SeloNumerario from "../components/ui/SeloNumerario";
 import { formatarCentavos, reaisParaCentavos } from "../lib/moeda";
-import type { CaixaApi } from "../lib/api";
+import type { CaixaApi, SangriaApi } from "../lib/api";
 
-/** Botão de filtro por área — selo de fivela, mesma linguagem dos badges. */
-function FiltroArea({
-  rotulo,
-  ativo,
-  onClick,
+/**
+ * Recolhimento Recomendado (Master Admin backlog, item 1 revisado): caixas
+ * em ATENCAO/CRITICO ficam sempre visíveis no topo, independente de busca
+ * ou filtro — a gerência nunca bloqueia venda, mas decide quando recolher.
+ */
+function PainelRecolhimento({
+  operadores,
+  registrandoSangriaId,
+  onRegistrarSangria,
 }: {
-  rotulo: string;
-  ativo: boolean;
-  onClick: () => void;
+  operadores: Operador[];
+  registrandoSangriaId: string | null;
+  onRegistrarSangria: (operador: Operador) => void;
 }) {
+  if (operadores.length === 0) return null;
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`whitespace-nowrap rounded-md border px-4 py-2 text-sm font-semibold transition-colors duration-150 ease-couro ${
-        ativo
-          ? "border-gold-500 bg-gold-500/15 text-gold-300"
-          : "border-leather-600/50 text-leather-300 hover:border-gold-500 hover:text-gold-300"
-      }`}
-    >
-      {rotulo}
-    </button>
+    <section className="mt-6 rounded-xl border border-gold-500/30 bg-wood-900 p-5 shadow-arena">
+      <h3 className="font-display text-xl text-gold-300">Recolhimento recomendado</h3>
+      <p className="mt-1 text-sm text-leather-300">
+        Numerário elevado ou crítico nestes caixas — a venda continua liberada normalmente.
+      </p>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {operadores.map((operador) => (
+          <div
+            key={operador.id}
+            className="flex flex-col gap-3 rounded-lg border border-leather-600/40 bg-arena-800 p-4"
+          >
+            <div className="flex items-center gap-3">
+              <Avatar nome={operador.nome} fotoUrl={operador.fotoUrl} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-bold text-leather-200">{operador.nome}</p>
+                <p className="truncate text-xs text-steel-400">
+                  {operador.areaTrabalho || "Área não informada"}
+                </p>
+              </div>
+              <p className="num-tabular shrink-0 text-lg font-bold text-gold-200">
+                {formatarCentavos(operador.saldoAtualCentavos)}
+              </p>
+            </div>
+            <SeloNumerario nivel={operador.nivelAlerta} />
+            <Botao
+              variante="couro"
+              tamanho="sm"
+              className="w-full"
+              carregando={registrandoSangriaId === operador.id}
+              rotuloCarregando="Recolhendo..."
+              onClick={() => onRegistrarSangria(operador)}
+            >
+              Registrar Sangria
+            </Botao>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -116,6 +155,35 @@ function ComprovanteFechamento({
   );
 }
 
+/** Recibo de sangria: malote assentando + valor recolhido + saldo restante. */
+function ComprovanteSangria({
+  operador,
+  sangria,
+  onConcluir,
+}: {
+  operador: Operador;
+  sangria: SangriaApi;
+  onConcluir: () => void;
+}) {
+  return (
+    <Modal titulo="Sangria registrada" onFechar={onConcluir}>
+      <div className="mt-4 flex flex-col items-center gap-4 text-center">
+        <p className="text-leather-300">
+          Recolhido do caixa de <span className="font-bold text-leather-200">{operador.nome}</span>
+        </p>
+        <MaloteSangria valorCentavos={reaisParaCentavos(sangria.valor)} registrada />
+        <p className="text-sm text-steel-400">
+          Saldo restante em espécie: {formatarCentavos(reaisParaCentavos(sangria.saldoEmEspecie))}
+        </p>
+      </div>
+
+      <Botao variante="latao" tamanho="lg" className="mt-6 w-full" onClick={onConcluir}>
+        Concluir
+      </Botao>
+    </Modal>
+  );
+}
+
 /**
  * Gerenciamento de Equipe (Admin): busca + filtro por área, grid de
  * operadores com ferradura de status, fechamento com conferência e
@@ -125,6 +193,7 @@ export default function GerenciamentoEquipe() {
   const {
     operadores,
     totalOperadores,
+    operadoresParaRecolhimento,
     areasDisponiveis,
     carregando,
     erro,
@@ -135,12 +204,22 @@ export default function GerenciamentoEquipe() {
     setAreaSelecionada,
     fechandoId,
     handleFecharCaixa,
+    registrandoSangriaId,
+    handleRegistrarSangria,
+    salvandoLimitesId,
+    handleAtualizarLimites,
   } = useGerenciamentoEquipe();
 
   const [operadorParaFechar, setOperadorParaFechar] = useState<Operador | null>(null);
   const [comprovante, setComprovante] = useState<{ operador: Operador; caixa: CaixaApi } | null>(
     null,
   );
+  const [operadorParaSangria, setOperadorParaSangria] = useState<Operador | null>(null);
+  const [comprovanteSangria, setComprovanteSangria] = useState<{
+    operador: Operador;
+    sangria: SangriaApi;
+  } | null>(null);
+  const [operadorParaLimites, setOperadorParaLimites] = useState<Operador | null>(null);
 
   async function confirmarFechamento(dados: DadosFechamento) {
     if (!operadorParaFechar) return;
@@ -151,18 +230,27 @@ export default function GerenciamentoEquipe() {
     }
   }
 
-  return (
-    <DashboardLayout titulo="Gerenciamento de Equipe">
-      <Link
-        to="/admin-dashboard"
-        className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-gold-300 transition-colors duration-200 hover:text-gold-200"
-      >
-        <SetaEsquerdaIcon className="h-4 w-4" />
-        Voltar ao painel
-      </Link>
+  async function confirmarSangria(valorCentavos: number) {
+    if (!operadorParaSangria) return;
+    const sangria = await handleRegistrarSangria(operadorParaSangria.id, valorCentavos);
+    if (sangria) {
+      setComprovanteSangria({ operador: operadorParaSangria, sangria });
+      setOperadorParaSangria(null);
+    }
+  }
 
+  async function confirmarLimites(dados: DadosLimites) {
+    if (!operadorParaLimites) return;
+    const sucesso = await handleAtualizarLimites(operadorParaLimites.id, dados);
+    if (sucesso) {
+      setOperadorParaLimites(null);
+    }
+  }
+
+  return (
+    <>
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-display text-2xl text-gold-300">Equipe do evento</h2>
+        <h1 className="font-display text-2xl text-gold-300 md:text-3xl">Equipe do evento</h1>
         {!carregando && (
           <p className="num-tabular text-sm text-steel-400">
             {operadores.length} de {totalOperadores} operador(es)
@@ -175,6 +263,12 @@ export default function GerenciamentoEquipe() {
           {erro}
         </Alerta>
       )}
+
+      <PainelRecolhimento
+        operadores={operadoresParaRecolhimento}
+        registrandoSangriaId={registrandoSangriaId}
+        onRegistrarSangria={setOperadorParaSangria}
+      />
 
       {/* Barra de ferramentas: busca + filtro de área */}
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -206,12 +300,7 @@ export default function GerenciamentoEquipe() {
 
       {/* Grid de operadores */}
       {carregando ? (
-        <div className="flex flex-col items-center gap-4 py-16">
-          <span className="text-gold-400">
-            <LassoSpinner className="h-8 w-8" />
-          </span>
-          <p className="text-sm font-semibold text-leather-300">Carregando equipe...</p>
-        </div>
+        <Carregando rotulo="Carregando equipe..." />
       ) : operadores.length === 0 ? (
         <div className="mt-8 rounded-xl border border-leather-600/40 bg-wood-900 p-8 text-center text-leather-300">
           Nenhum operador encontrado com esses filtros.
@@ -223,7 +312,10 @@ export default function GerenciamentoEquipe() {
               key={operador.id}
               operador={operador}
               fechando={fechandoId === operador.id}
+              registrandoSangria={registrandoSangriaId === operador.id}
               onFecharCaixa={setOperadorParaFechar}
+              onRegistrarSangria={setOperadorParaSangria}
+              onEditarLimites={setOperadorParaLimites}
             />
           ))}
         </div>
@@ -245,6 +337,33 @@ export default function GerenciamentoEquipe() {
           onConcluir={() => setComprovante(null)}
         />
       )}
-    </DashboardLayout>
+
+      {operadorParaSangria && (
+        <SangriaModal
+          operador={operadorParaSangria}
+          saldoAtualCentavos={operadorParaSangria.saldoAtualCentavos}
+          enviando={registrandoSangriaId === operadorParaSangria.id}
+          onConfirmar={confirmarSangria}
+          onCancelar={() => setOperadorParaSangria(null)}
+        />
+      )}
+
+      {comprovanteSangria && (
+        <ComprovanteSangria
+          operador={comprovanteSangria.operador}
+          sangria={comprovanteSangria.sangria}
+          onConcluir={() => setComprovanteSangria(null)}
+        />
+      )}
+
+      {operadorParaLimites && (
+        <EditarLimitesModal
+          operador={operadorParaLimites}
+          salvando={salvandoLimitesId === operadorParaLimites.id}
+          onConfirmar={confirmarLimites}
+          onCancelar={() => setOperadorParaLimites(null)}
+        />
+      )}
+    </>
   );
 }

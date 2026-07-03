@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.arena.rodeio.model.Caixa;
+import com.arena.rodeio.model.NivelAlertaNumerario;
 import com.arena.rodeio.model.StatusCaixa;
 
 public record CaixaResponse(
@@ -24,10 +25,12 @@ public record CaixaResponse(
      * valorFinalConfirmado − saldoEmEspecie: positivo = sobra, negativo =
      * falta. Null enquanto o caixa está aberto (nada foi contado ainda).
      */
-    BigDecimal divergencia
+    BigDecimal divergencia,
+    /** Nível de numerário em espécie (regra de negócio nº 2) — nunca bloqueia venda. */
+    NivelAlertaNumerario nivelAlerta
 ) {
 
-    public static CaixaResponse from(Caixa caixa, BigDecimal saldoEmEspecie) {
+    public static CaixaResponse from(Caixa caixa, BigDecimal saldoEmEspecie, NivelAlertaNumerario nivelAlerta) {
         var valorFinal = caixa.getValorFinalConfirmado();
         var divergencia = valorFinal == null ? null : valorFinal.subtract(saldoEmEspecie);
 
@@ -42,6 +45,7 @@ public record CaixaResponse(
             saldoEmEspecie,
             valorFinal,
             caixa.getMotivoFechamento(),
-            divergencia);
+            divergencia,
+            nivelAlerta);
     }
 }

@@ -25,8 +25,13 @@ public record PerfilFuncionarioRequest(
     /** Posto do funcionário (ex.: "Bar de Fora"). Opcional — nem todo cargo tem um posto fixo. */
     String areaTrabalho,
 
-    @NotNull(message = "Informe o limite de sangria.")
-    @DecimalMin(value = "0.00", message = "O limite de sangria não pode ser negativo.")
+    @NotNull(message = "Informe o limite de atenção.")
+    @DecimalMin(value = "0.00", message = "O limite de atenção não pode ser negativo.")
     @Digits(integer = 10, fraction = 2, message = "Use no máximo 2 casas decimais.")
-    BigDecimal limiteSangria
+    BigDecimal limiteAtencao,
+
+    @NotNull(message = "Informe o limite crítico.")
+    @DecimalMin(value = "0.00", message = "O limite crítico não pode ser negativo.")
+    @Digits(integer = 10, fraction = 2, message = "Use no máximo 2 casas decimais.")
+    BigDecimal limiteCritico
 ) {}

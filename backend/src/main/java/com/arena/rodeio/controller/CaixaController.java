@@ -76,8 +76,9 @@ public class CaixaController {
     }
 
     /**
-     * Lança uma venda no caixa. Se em DINHEIRO e o limite do operador for
-     * atingido, a resposta traz alerta = "ALERTA_SANGRIA_ATINGIDO".
+     * Lança uma venda no caixa. A resposta sempre traz o nivelAlerta atual
+     * do numerário em espécie (NORMAL/ATENCAO/CRITICO) — nunca bloqueia a
+     * venda (regra de negócio nº 2, revisada).
      */
     @PostMapping("/{id}/vender")
     @PreAuthorize("hasAnyRole('OPERADOR', 'MASTER_ADMIN')")
@@ -119,6 +120,13 @@ public class CaixaController {
     @PreAuthorize("hasRole('MASTER_ADMIN')")
     public List<CaixaResponse> listarAbertos() {
         return caixaService.listarAbertos();
+    }
+
+    /** Lista todos os caixas fechados — Scorecard de Divergência de Operadores. */
+    @GetMapping("/fechados")
+    @PreAuthorize("hasRole('MASTER_ADMIN')")
+    public List<CaixaResponse> listarFechados() {
+        return caixaService.listarFechados();
     }
 
     private static UUID usuarioId(Jwt jwt) {

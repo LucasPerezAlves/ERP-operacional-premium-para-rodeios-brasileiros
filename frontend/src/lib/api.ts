@@ -1,5 +1,7 @@
 import { getSupabase } from "./supabase";
 import { centavosParaReais } from "./moeda";
+import type { CategoriaSos } from "./sos";
+import type { NivelAlertaNumerario } from "./numerario";
 
 /**
  * Camada única de acesso à API Spring Boot: resolve o Bearer token da sessão
@@ -23,6 +25,8 @@ export interface CaixaApi {
   motivoFechamento: string | null;
   /** valorFinalConfirmado − saldoEmEspecie: positivo = sobra, negativo = falta. */
   divergencia: number | null;
+  /** Nível de numerário em espécie (regra de negócio nº 2) — nunca bloqueia venda. */
+  nivelAlerta: NivelAlertaNumerario;
 }
 
 export interface VendaApi {
@@ -32,8 +36,30 @@ export interface VendaApi {
   formaPagamento: FormaPagamento;
   registradaEm: string;
   saldoEmEspecie: number;
-  /** "ALERTA_SANGRIA_ATINGIDO" quando o limite do operador foi alcançado. */
-  alerta: string | null;
+  nivelAlerta: NivelAlertaNumerario;
+}
+
+export interface SangriaApi {
+  id: string;
+  caixaId: string;
+  adminId: string;
+  valor: number;
+  registradaEm: string;
+  /** Espécie restante no caixa após o recolhimento. */
+  saldoEmEspecie: number;
+}
+
+export interface SosAlertaApi {
+  id: string;
+  caixaId: string;
+  operadorId: string;
+  operadorNome: string;
+  categoria: CategoriaSos;
+  saldoEmEspecie: number;
+  status: "ABERTO" | "ATENDIDO";
+  criadoEm: string;
+  atendidoPorAdminId: string | null;
+  atendidoEm: string | null;
 }
 
 export interface FuncionarioApi {
@@ -45,7 +71,8 @@ export interface FuncionarioApi {
   perfilAcesso: "MASTER_ADMIN" | "OPERADOR";
   areaTrabalho: string | null;
   fotoUrl: string | null;
-  limiteSangria: number;
+  limiteAtencao: number;
+  limiteCritico: number;
   ativo: boolean;
 }
 
@@ -145,6 +172,16 @@ export function registrarVenda(
   }) as Promise<VendaApi>;
 }
 
+/** Exclusivo do Admin: recolhimento de espécie (regra de negócio nº 2). */
+export function registrarSangria(
+  caixaId: string,
+  valorCentavos: number,
+): Promise<SangriaApi> {
+  return request<SangriaApi>(`/api/caixas/${caixaId}/sangria`, "POST", {
+    valor: centavosParaReais(valorCentavos),
+  }) as Promise<SangriaApi>;
+}
+
 /** Exclusivo do Admin: valor contado fisicamente + motivo ficam registrados. */
 export function fecharCaixa(
   caixaId: string,
@@ -157,12 +194,67 @@ export function fecharCaixa(
   }) as Promise<CaixaApi>;
 }
 
+/** Histórico do SOS (Master Admin backlog, item 1) — o acionamento em tempo
+ * real acontece via Supabase Realtime Broadcast; isto só persiste o registro. */
+export function registrarSos(
+  caixaId: string,
+  operadorNome: string,
+  categoria: CategoriaSos,
+  saldoEmEspecieCentavos: number,
+): Promise<SosAlertaApi> {
+  return request<SosAlertaApi>("/api/sos", "POST", {
+    caixaId,
+    operadorNome,
+    categoria,
+    saldoEmEspecie: centavosParaReais(saldoEmEspecieCentavos),
+  }) as Promise<SosAlertaApi>;
+}
+
+/** Exclusivo do Admin: hidrata o painel com SOS abertos antes desta sessão. */
+export function listarSosAbertos(): Promise<SosAlertaApi[]> {
+  return request<SosAlertaApi[]>("/api/sos/abertos", "GET") as Promise<SosAlertaApi[]>;
+}
+
+/** Exclusivo do Admin: marca que a gerência já chegou ao posto. */
+export function atenderSos(id: string): Promise<SosAlertaApi> {
+  return request<SosAlertaApi>(`/api/sos/${id}/atender`, "PUT") as Promise<SosAlertaApi>;
+}
+
 /** Exclusivo do Admin (lista completa, com foto e área de trabalho). */
 export function listarFuncionarios(): Promise<FuncionarioApi[]> {
   return request<FuncionarioApi[]>("/api/funcionarios", "GET") as Promise<FuncionarioApi[]>;
 }
 
+/**
+ * Exclusivo do Admin: atualização completa do perfil (o PUT substitui o
+ * registro inteiro — nome/cargo/área precisam viajar junto mesmo quando só
+ * os limiares de numerário mudam, regra de negócio nº 2).
+ */
+export function atualizarFuncionario(
+  id: string,
+  dados: {
+    nomeCompleto: string;
+    cargo: string;
+    areaTrabalho: string | null;
+    limiteAtencaoCentavos: number;
+    limiteCriticoCentavos: number;
+  },
+): Promise<FuncionarioApi> {
+  return request<FuncionarioApi>(`/api/funcionarios/${id}`, "PUT", {
+    nomeCompleto: dados.nomeCompleto,
+    cargo: dados.cargo,
+    areaTrabalho: dados.areaTrabalho,
+    limiteAtencao: centavosParaReais(dados.limiteAtencaoCentavos),
+    limiteCritico: centavosParaReais(dados.limiteCriticoCentavos),
+  }) as Promise<FuncionarioApi>;
+}
+
 /** Exclusivo do Admin — tela Gerenciamento de Equipe (status de todo mundo). */
 export function listarCaixasAbertos(): Promise<CaixaApi[]> {
   return request<CaixaApi[]>("/api/caixas/abertos", "GET") as Promise<CaixaApi[]>;
+}
+
+/** Exclusivo do Admin — Scorecard de Divergência de Operadores. */
+export function listarCaixasFechados(): Promise<CaixaApi[]> {
+  return request<CaixaApi[]>("/api/caixas/fechados", "GET") as Promise<CaixaApi[]>;
 }

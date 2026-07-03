@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   buscarMeuCaixa,
+  registrarSos,
   registrarVenda,
   ApiError,
   type CaixaApi,
@@ -11,6 +12,8 @@ import { reaisParaCentavos } from "../lib/moeda";
 import { getSupabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { tocarErro, tocarSucesso } from "../lib/sons";
+import type { CategoriaSos } from "../lib/sos";
+import type { NivelAlertaNumerario } from "../lib/numerario";
 
 // ---------------------------------------------------------------------------
 // Tipos expostos ao componente (tudo em centavos)
@@ -26,6 +29,7 @@ export interface CaixaAtivo {
   saldoInicialCentavos: number;
   saldoEmEspecieCentavos: number;
   dataAbertura: string;
+  nivelAlerta: NivelAlertaNumerario;
 }
 
 export interface VendaConcluida {
@@ -34,15 +38,7 @@ export interface VendaConcluida {
   trocoCentavos: number | null;
 }
 
-export type CategoriaSos = "TROCO" | "PROBLEMA_MAQUINA" | "MAIS_GENTE" | "CONFUSAO";
-
 export type SosStatus = "idle" | "enviando" | "acionada";
-
-interface AlertaSangria {
-  ativo: boolean;
-  /** Espécie no momento do disparo — se uma resposta futura vier menor, houve sangria. */
-  saldoNoDisparoCentavos: number;
-}
 
 function paraCaixaAtivo(resposta: CaixaApi): CaixaAtivo {
   return {
@@ -50,6 +46,7 @@ function paraCaixaAtivo(resposta: CaixaApi): CaixaAtivo {
     saldoInicialCentavos: reaisParaCentavos(resposta.saldoInicial),
     saldoEmEspecieCentavos: reaisParaCentavos(resposta.saldoEmEspecie),
     dataAbertura: resposta.dataAbertura,
+    nivelAlerta: resposta.nivelAlerta,
   };
 }
 
@@ -65,10 +62,6 @@ export function useCaixa() {
   const [carregandoStatus, setCarregandoStatus] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [alertaSangria, setAlertaSangria] = useState<AlertaSangria>({
-    ativo: false,
-    saldoNoDisparoCentavos: 0,
-  });
   const [sosStatus, setSosStatus] = useState<SosStatus>("idle");
   const sosTimeoutRef = useRef<number | null>(null);
 
@@ -120,20 +113,15 @@ export function useCaixa() {
   }, [userId, buscarStatus]);
 
   const atualizarSaldo = useCallback((venda: VendaApi) => {
-    const saldoCentavos = reaisParaCentavos(venda.saldoEmEspecie);
-
-    setCaixa((atual) => (atual ? { ...atual, saldoEmEspecieCentavos: saldoCentavos } : atual));
-
-    if (venda.alerta === "ALERTA_SANGRIA_ATINGIDO") {
-      setAlertaSangria({ ativo: true, saldoNoDisparoCentavos: saldoCentavos });
-    } else {
-      // Saldo caiu abaixo do valor do disparo → a gerência fez a sangria
-      setAlertaSangria((alerta) =>
-        alerta.ativo && saldoCentavos < alerta.saldoNoDisparoCentavos
-          ? { ativo: false, saldoNoDisparoCentavos: 0 }
-          : alerta,
-      );
-    }
+    setCaixa((atual) =>
+      atual
+        ? {
+            ...atual,
+            saldoEmEspecieCentavos: reaisParaCentavos(venda.saldoEmEspecie),
+            nivelAlerta: venda.nivelAlerta,
+          }
+        : atual,
+    );
   }, []);
 
   const vender = useCallback(
@@ -173,15 +161,33 @@ export function useCaixa() {
   );
 
   /**
-   * SOS "Chamar Gerência": transportado por Supabase Realtime Broadcast —
-   * o painel do Admin assina o canal "arena-sos" e recebe o alerta em tempo
-   * real, sem passar pelo back-end Java. Quando o endpoint de persistência
-   * existir, este método passa a também registrar via API.
+   * SOS "Chamar Gerência": persiste primeiro via API (garante um id real
+   * para o Admin "atender" depois) e então transporta por Supabase Realtime
+   * Broadcast — o painel do Admin assina o canal "arena-sos" e recebe o
+   * alerta na hora. Se o back-end estiver fora do ar, ainda tentamos o
+   * broadcast sozinho: SOS não pode depender só da API estar de pé.
    */
   const chamarGerencia = useCallback(
     async (categoria: CategoriaSos) => {
       if (!caixa || sosStatus !== "idle") return;
       setSosStatus("enviando");
+
+      const operadorNome = perfil?.nomeCompleto || perfil?.email || "Operador";
+      let sosId: string | null = null;
+      let horario = new Date().toISOString();
+
+      try {
+        const registrado = await registrarSos(
+          caixa.id,
+          operadorNome,
+          categoria,
+          caixa.saldoEmEspecieCentavos,
+        );
+        sosId = registrado.id;
+        horario = registrado.criadoEm;
+      } catch {
+        // segue para o broadcast mesmo sem persistência
+      }
 
       try {
         const supabase = getSupabase();
@@ -195,12 +201,13 @@ export function useCaixa() {
                   type: "broadcast",
                   event: "sos",
                   payload: {
+                    id: sosId,
                     caixaId: caixa.id,
                     operadorId: userId,
-                    operadorNome: perfil?.nomeCompleto || perfil?.email || "Operador",
+                    operadorNome,
                     categoria,
                     saldoEmEspecie: caixa.saldoEmEspecieCentavos / 100,
-                    horario: new Date().toISOString(),
+                    horario,
                   },
                 })
                 .then(() => resolve())
@@ -241,7 +248,6 @@ export function useCaixa() {
     enviando,
     erro,
     limparErro: () => setErro(null),
-    alertaSangriaAtivo: alertaSangria.ativo,
     sosStatus,
     vender,
     chamarGerencia,

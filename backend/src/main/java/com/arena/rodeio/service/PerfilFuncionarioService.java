@@ -44,9 +44,9 @@ public class PerfilFuncionarioService {
         perfil.setNomeCompleto(request.nomeCompleto().trim());
         perfil.setCargo(request.cargo());
         perfil.setAreaTrabalho(request.areaTrabalho() == null ? null : request.areaTrabalho().trim());
-        perfil.setLimiteSangria(
-            // Dinheiro sempre com scale 2 e arredondamento bancário
-            request.limiteSangria().setScale(2, RoundingMode.HALF_EVEN));
+        // Dinheiro sempre com scale 2 e arredondamento bancário
+        perfil.setLimiteAtencao(request.limiteAtencao().setScale(2, RoundingMode.HALF_EVEN));
+        perfil.setLimiteCritico(request.limiteCritico().setScale(2, RoundingMode.HALF_EVEN));
 
         return PerfilFuncionarioResponse.from(perfil);
     }
