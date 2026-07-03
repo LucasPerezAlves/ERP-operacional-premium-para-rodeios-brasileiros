@@ -75,3 +75,17 @@ export function tocarErro(): void {
     // Áudio indisponível: segue o fluxo em silêncio
   }
 }
+
+/** Sirene curta de duas notas alternadas: SOS de um posto chegou no painel da gerência. */
+export function tocarSos(): void {
+  try {
+    const ctx = obterContexto();
+    if (!ctx) return;
+    const agora = ctx.currentTime;
+    tocarNota(ctx, "square", 880, agora, 0.18, 0.3);
+    tocarNota(ctx, "square", 660, agora + 0.2, 0.18, 0.3);
+    tocarNota(ctx, "square", 880, agora + 0.4, 0.18, 0.3);
+  } catch {
+    // Áudio indisponível: segue o fluxo em silêncio
+  }
+}

@@ -85,6 +85,7 @@ export default {
           500: "#943630",
           400: "#b24a40",
           300: "#d1786c",
+          200: "#e2a196",
         },
       },
       boxShadow: {
@@ -152,6 +153,17 @@ export default {
           "60%": { opacity: "1", transform: "scale(1.05)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        // Pulso de latão: brilho quente sutil na borda — EXCLUSIVO de avisos
+        "pulso-latao": {
+          "0%, 100%": { boxShadow: "0 0 0 0 rgba(212, 175, 55, 0)" },
+          "50%": { boxShadow: "0 0 14px 0 rgba(212, 175, 55, 0.3)" },
+        },
+        // Malote guardando o dinheiro: assentamento curto (sangria registrada)
+        "malote-guarda": {
+          "0%": { opacity: "0.6", transform: "translateY(-6px) scale(0.98)" },
+          "60%": { opacity: "1", transform: "translateY(1px) scale(1.01)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
       },
       animation: {
         "dust-rise": "dust-rise 14s linear infinite",
@@ -163,6 +175,8 @@ export default {
         "brilho-metalico": "brilho-metalico 0.7s ease-out both",
         lampiao: "lampiao 2.8s linear infinite",
         "ferradura-acende": "ferradura-acende 0.5s ease-out both",
+        "pulso-latao": "pulso-latao 2.4s ease-in-out infinite",
+        "malote-guarda": "malote-guarda 0.45s cubic-bezier(0.32, 0.72, 0, 1) both",
       },
       // Curvas de transição customizadas (ver DESIGN-SYSTEM.md § Animação)
       transitionTimingFunction: {

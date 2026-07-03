@@ -12,11 +12,11 @@ export type TamanhoBotao = "sm" | "md" | "lg" | "pdv";
 
 const VARIANTES: Record<VarianteBotao, string> = {
   latao:
-    "btn-skeuo rounded-lg bg-gradient-to-b from-gold-400 to-gold-600 font-bold uppercase tracking-wider text-wood-950 hover:from-gold-300 hover:to-gold-500",
+    "btn-skeuo brilho-hover rounded-lg bg-gradient-to-b from-gold-400 to-gold-600 font-bold uppercase tracking-wider text-wood-950 hover:from-gold-300 hover:to-gold-500",
   couro:
     "rounded-lg border-2 border-leather-500/60 bg-transparent font-semibold text-leather-200 transition-colors duration-200 ease-couro hover:border-gold-400 hover:text-gold-300 active:scale-[0.98]",
   lampiao:
-    "rounded-lg border border-bordo-500/50 bg-gradient-to-b from-bordo-700 to-bordo-900 font-semibold text-bordo-300 transition-colors duration-200 ease-couro hover:from-bordo-500 hover:to-bordo-800 hover:text-bordo-200 active:translate-y-[2px]",
+    "rounded-lg border border-bordo-500/50 bg-gradient-to-b from-bordo-700 to-bordo-900 font-semibold text-bordo-200 transition-colors duration-200 ease-couro hover:from-bordo-500 hover:to-bordo-800 active:translate-y-[2px]",
   fantasma:
     "rounded-lg font-semibold text-gold-300 transition-colors duration-200 hover:text-gold-200",
 };

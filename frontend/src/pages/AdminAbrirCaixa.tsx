@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import AberturaCaixa from "../components/pdv/AberturaCaixa";
 import { useAdminAbrirCaixa, type OperadorParaAbertura } from "../hooks/useAdminAbrirCaixa";
-import { HorseshoeIcon, LassoSpinner, SetaEsquerdaIcon } from "../components/icons";
+import { SetaEsquerdaIcon } from "../components/icons";
 import Alerta from "../components/ui/Alerta";
 import Avatar from "../components/ui/Avatar";
 import Botao from "../components/ui/Botao";
 import SeloCaixa from "../components/ui/SeloCaixa";
+import { Carregando, SucessoOperacional } from "../components/ui/interacoes";
 
 type Etapa =
   | { nome: "selecionar" }
@@ -55,12 +56,7 @@ export default function AdminAbrirCaixa() {
           </p>
 
           {carregando ? (
-            <div className="flex flex-col items-center gap-4 py-16">
-              <span className="text-gold-400">
-                <LassoSpinner className="h-8 w-8" />
-              </span>
-              <p className="text-sm font-semibold text-leather-300">Carregando equipe...</p>
-            </div>
+            <Carregando rotulo="Carregando equipe..." />
           ) : operadores.length === 0 ? (
             <div className="mt-8 rounded-xl border border-leather-600/40 bg-wood-900 p-8 text-center text-leather-300">
               Nenhum operador aprovado disponível. Aprove cadastros em Gerenciar
@@ -148,12 +144,12 @@ export default function AdminAbrirCaixa() {
       )}
 
       {etapa.nome === "concluido" && (
-        <div className="mx-auto max-w-xl text-center animate-fade-in-up">
-          <HorseshoeIcon className="mx-auto h-16 w-16 animate-ferradura-acende text-gold-400" />
-          <p className="mt-4 font-display text-3xl text-gold-300">Caixa aberto</p>
-          <p className="mt-3 text-xl text-leather-300">
-            {etapa.operador.nomeCompleto} já pode começar a vender.
-          </p>
+        <div className="mx-auto max-w-xl">
+          <SucessoOperacional titulo="Caixa aberto">
+            <p className="mt-3 text-xl text-leather-300">
+              {etapa.operador.nomeCompleto} já pode começar a vender.
+            </p>
+          </SucessoOperacional>
           <div className="mt-8 grid grid-cols-2 gap-4">
             <Botao
               variante="couro"

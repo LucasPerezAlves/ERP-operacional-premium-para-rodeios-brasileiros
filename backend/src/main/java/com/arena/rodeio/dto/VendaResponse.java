@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.arena.rodeio.model.FormaPagamento;
+import com.arena.rodeio.model.NivelAlertaNumerario;
 import com.arena.rodeio.model.Venda;
 
 public record VendaResponse(
@@ -16,16 +17,13 @@ public record VendaResponse(
     /** Espécie no caixa após esta venda (só muda em vendas DINHEIRO). */
     BigDecimal saldoEmEspecie,
     /**
-     * "ALERTA_SANGRIA_ATINGIDO" quando o dinheiro em caixa alcançou o
-     * limiteSangria do operador (regra de negócio nº 2); null caso contrário.
-     * O front-end usa este flag para alertar e acionar o supervisor.
+     * Nível de numerário em espécie (regra de negócio nº 2, revisada): nunca
+     * bloqueia a venda, só escala o alerta para a gerência decidir a sangria.
      */
-    String alerta
+    NivelAlertaNumerario nivelAlerta
 ) {
 
-    public static final String ALERTA_SANGRIA_ATINGIDO = "ALERTA_SANGRIA_ATINGIDO";
-
-    public static VendaResponse from(Venda venda, BigDecimal saldoEmEspecie, String alerta) {
+    public static VendaResponse from(Venda venda, BigDecimal saldoEmEspecie, NivelAlertaNumerario nivelAlerta) {
         return new VendaResponse(
             venda.getId(),
             venda.getCaixa().getId(),
@@ -33,6 +31,6 @@ public record VendaResponse(
             venda.getFormaPagamento(),
             venda.getRegistradaEm(),
             saldoEmEspecie,
-            alerta);
+            nivelAlerta);
     }
 }

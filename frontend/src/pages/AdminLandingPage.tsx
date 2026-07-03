@@ -11,8 +11,7 @@ import {
 /** Módulos ainda não construídos — lista discreta, nunca cards falsos. */
 const NO_CURRAL = [
   "Fechamento global do evento",
-  "Alertas de sangria em tempo real",
-  "Relatórios financeiros e scorecard de operadores",
+  "Gráfico de velocidade de sangria (previsão de cofre)",
   "Cortesias (passe livre) com motivo e autorizador",
   "Custo de equipe em tempo real",
 ] as const;
@@ -36,7 +35,7 @@ export default function AdminLandingPage() {
         {/* Ação dominante: couro costurado com borda dourada */}
         <Link
           to="/admin-dashboard/abrir-caixa"
-          className="costura group relative flex flex-col justify-between gap-6 rounded-xl border border-gold-500/50 bg-wood-800 p-7 shadow-arena transition-colors duration-200 ease-couro hover:border-gold-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400/30 lg:col-span-2"
+          className="costura group relative flex flex-col justify-between gap-6 rounded-xl border border-gold-500/50 bg-wood-800 p-7 shadow-arena transition-colors duration-200 ease-couro hover:border-gold-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400/30 lg:col-span-2 lg:row-span-2"
         >
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -69,6 +68,24 @@ export default function AdminLandingPage() {
           </div>
           <span className="inline-flex items-center gap-2 text-sm font-semibold text-gold-400">
             Ver a equipe
+            <SetaDireitaIcon className="h-4 w-4 transition-transform duration-200 ease-couro group-hover:translate-x-1" />
+          </span>
+        </Link>
+
+        {/* Ação secundária: relatório */}
+        <Link
+          to="/admin-dashboard/scorecard"
+          className="group flex flex-col justify-between gap-6 rounded-xl border border-leather-600/40 bg-wood-900 p-7 shadow-arena transition-colors duration-200 ease-couro hover:border-gold-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400/30"
+        >
+          <div>
+            <LivroCaixaIcon className="h-9 w-9 text-leather-300 transition-colors duration-200 group-hover:text-gold-400" />
+            <h3 className="mt-4 font-display text-xl text-gold-300">Scorecard de Operadores</h3>
+            <p className="mt-2 text-[15px] leading-relaxed text-leather-300">
+              Histórico de sobra/falta por operador, com alerta de padrão recorrente.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-gold-400">
+            Ver histórico
             <SetaDireitaIcon className="h-4 w-4 transition-transform duration-200 ease-couro group-hover:translate-x-1" />
           </span>
         </Link>

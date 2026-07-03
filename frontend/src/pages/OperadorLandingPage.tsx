@@ -2,12 +2,8 @@ import { Link } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import { useCaixa } from "../hooks/useCaixa";
 import { formatarCentavos } from "../lib/moeda";
-import {
-  HorseshoeIcon,
-  LassoSpinner,
-  PlacaIcon,
-  SetaDireitaIcon,
-} from "../components/icons";
+import { HorseshoeIcon, PlacaIcon, SetaDireitaIcon } from "../components/icons";
+import { Carregando } from "../components/ui/interacoes";
 
 /**
  * Landing do Operador (regra inegociável nº 7): o herói da tela é o STATUS
@@ -21,12 +17,7 @@ export default function OperadorLandingPage() {
   if (carregandoStatus) {
     return (
       <DashboardLayout titulo="Meu Posto">
-        <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-          <span className="text-gold-400">
-            <LassoSpinner className="h-10 w-10" />
-          </span>
-          <p className="text-sm font-semibold text-leather-300">Consultando seu caixa...</p>
-        </div>
+        <Carregando rotulo="Consultando seu caixa..." />
       </DashboardLayout>
     );
   }

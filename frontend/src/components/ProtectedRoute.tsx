@@ -1,19 +1,7 @@
 import { type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { rotaDoPerfil, useAuth, type PerfilAcesso } from "../lib/auth";
-import { LassoSpinner } from "./icons";
-
-/** Tela de transição temática enquanto a sessão é restaurada. */
-function TelaCarregando() {
-  return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-arena-950 font-sans">
-      <span className="text-gold-400">
-        <LassoSpinner className="h-10 w-10" />
-      </span>
-      <p className="text-sm font-semibold text-leather-300">Selando a montaria...</p>
-    </div>
-  );
-}
+import { Carregando } from "./ui/interacoes";
 
 interface ProtectedRouteProps {
   /** Níveis de acesso autorizados a ver esta rota. */
@@ -31,7 +19,7 @@ export default function ProtectedRoute({ perfisPermitidos, children }: Protected
   const { perfil, carregando } = useAuth();
 
   if (carregando) {
-    return <TelaCarregando />;
+    return <Carregando telaCheia rotulo="Selando a montaria..." />;
   }
 
   if (!perfil || perfil.statusAprovacao !== "APROVADO") {

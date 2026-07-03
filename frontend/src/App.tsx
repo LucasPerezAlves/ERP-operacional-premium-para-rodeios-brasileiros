@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AuthPage from "./pages/AuthPage";
 import AdminLandingPage from "./pages/AdminLandingPage";
 import AdminAbrirCaixa from "./pages/AdminAbrirCaixa";
+import AdminScorecard from "./pages/AdminScorecard";
 import GerenciamentoEquipe from "./pages/GerenciamentoEquipe";
 import OperadorLandingPage from "./pages/OperadorLandingPage";
 import OperadorVenda from "./pages/OperadorVenda";
@@ -14,6 +15,7 @@ import OperadorVenda from "./pages/OperadorVenda";
  * - "/admin-dashboard"             → Landing do MASTER_ADMIN (grid de módulos)
  * - "/admin-dashboard/abrir-caixa" → Abertura de caixa (regra inegociável nº 7)
  * - "/admin-dashboard/equipe"      → Gerenciamento de Equipe (status + fechamento)
+ * - "/admin-dashboard/scorecard"   → Scorecard de Divergência de Operadores
  * - "/operador-dashboard"          → Landing do OPERADOR (status + funções)
  * - "/operador-dashboard/venda"    → PDV de venda (só com caixa aberto)
  */
@@ -44,6 +46,14 @@ export default function App() {
             element={
               <ProtectedRoute perfisPermitidos={["MASTER_ADMIN"]}>
                 <GerenciamentoEquipe />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/scorecard"
+            element={
+              <ProtectedRoute perfisPermitidos={["MASTER_ADMIN"]}>
+                <AdminScorecard />
               </ProtectedRoute>
             }
           />

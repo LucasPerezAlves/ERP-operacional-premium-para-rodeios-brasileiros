@@ -53,11 +53,14 @@ public class PerfilFuncionarioController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('MASTER_ADMIN')")
     public PerfilFuncionarioResponse buscarPorId(@PathVariable UUID id) {
         return service.buscarPorId(id);
     }
 
+    /** Inclui cargo, área e os limiares de numerário (regra de negócio nº 2) — exclusivo da gerência. */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('MASTER_ADMIN')")
     public PerfilFuncionarioResponse atualizar(
             @PathVariable UUID id,
             @Valid @RequestBody PerfilFuncionarioRequest request) {
@@ -66,6 +69,7 @@ public class PerfilFuncionarioController {
 
     /** Desativação lógica — nunca apagamos histórico financeiro. */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('MASTER_ADMIN')")
     public PerfilFuncionarioResponse desativar(@PathVariable UUID id) {
         return service.desativar(id);
     }

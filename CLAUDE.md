@@ -213,10 +213,15 @@ Service Workers e IndexedDB: vendas e recebimentos registrados localmente entram
 numa fila e são sincronizados em background quando a conexão volta.
 
 **2. Alertas Automatizados de Sangria (Segurança Física)**
-Cada operador/caixa tem um limite configurável de dinheiro em espécie
-(ex.: R$ 2.000,00 — campo `limiteSangria`, `BigDecimal`). Ao atingir o limite, a
-interface alerta e bloqueia temporariamente funções até que um supervisor
-recolha o dinheiro e registre a **Sangria** no sistema.
+O sistema **nunca bloqueia venda** — faturamento não pode parar num rodeio
+lotado. Em vez de um limite binário, cada operador tem dois limiares
+configuráveis de dinheiro em espécie (`limiteAtencao` e `limiteCritico`,
+`BigDecimal`, campos de `perfis_funcionarios`) que alimentam o
+`NivelAlertaNumerario` (`NORMAL` / `ATENCAO` / `CRITICO`), recalculado a
+cada venda e exposto em toda resposta de caixa/venda. O papel do sistema é
+monitorar e alertar a gerência — nunca decidir ou impedir; quem decide
+recolher o dinheiro e registrar a **Sangria** é sempre a gerência (regra
+inegociável nº 7).
 
 **3. Conciliação Automática: Dinheiro vs. Estoque**
 Módulo de "Carga de Pista/Bar": o garçom recebe um volume X de bebida. No
@@ -344,11 +349,20 @@ Cadastro) exige:
      filtro por área, grid de operadores com badge de status de caixa e
      fluxo de fechamento com teclado numérico + motivo
    - PDV do Operador (venda): Combo-Click, Calculadora de Troco, bips por
-     Web Audio, bloqueio de DINHEIRO sob alerta de sangria e SOS via
-     Supabase Realtime (canal `arena-sos`)
-   - Pendente: painel do Admin assinar o canal `arena-sos`, registrar
-     sangria pela UI, persistência do SOS no back-end, relatório de
-     divergência (Scorecard de Operadores) usando o campo já coletado
+     Web Audio, `SeloNumerario` com o `NivelAlertaNumerario` do caixa
+     (nunca bloqueia DINHEIRO) e SOS via Supabase Realtime (canal `arena-sos`)
+   - ✅ Painel do Admin assina o canal `arena-sos` (alerta piscando em
+     qualquer tela, `DashboardLayout` + `useSosAlertas`), sangria é
+     registrada pela UI (`Gerenciamento de Equipe` → `SangriaModal`), o SOS
+     é persistido no back-end (`sos_alertas`, script 007 — histórico
+     sobrevive a um Admin que estava offline) e o Scorecard de Divergência
+     (`/admin-dashboard/scorecard`) consolida sobra/falta por operador com
+     alerta de padrão recorrente
+   - ✅ Regra de negócio nº 2 revisada: `limiteSangria` binário virou dois
+     limiares por operador (`limiteAtencao`/`limiteCritico`, script 008) que
+     alimentam o `NivelAlertaNumerario`; painel "Recolhimento Recomendado"
+     em Gerenciamento de Equipe lista caixas em ATENCAO/CRITICO em tempo
+     real (Realtime na tabela `vendas`) com ação direta de Registrar Sangria
 3. Carga de pista/bar e conciliação de estoque — inclui os itens 6 e 7 do
    backlog do Master Admin (cadastro de estoque e leitura de vendas por
    foto/IA, sempre com confirmação humana antes de qualquer baixa)

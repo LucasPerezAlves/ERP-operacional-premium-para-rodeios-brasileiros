@@ -144,9 +144,12 @@ Famílias fixas por spec: **Alfa Slab One** (`font-display`) e **Inter**
 
 ## Regras por contexto
 
-- **Títulos:** Alfa Slab One APENAS em `marca`, `titulo-pagina` e
-  `numero-heroi`. Slab em texto corrente/botões pequenos é proibido (vira
-  fantasia, não pôster).
+- **Títulos:** Alfa Slab One APENAS em: `marca`, `titulo-pagina`,
+  `numero-heroi`, título de **card de navegação** (módulos das landings,
+  `text-xl/2xl`) e título de **momento de sucesso** (`SucessoOperacional`).
+  Slab em texto corrente, labels ou botões pequenos é proibido (vira
+  fantasia, não pôster). CTAs latão podem usar slab só em `lg`/`pdv` de
+  tela cheia (ex.: "Abrir Caixa", "Nova Venda").
 - **Subtítulos:** Inter 600, sentence case. **Ração de uppercase: no máximo 1
   elemento em caps por bloco visual** (o código hoje tem 51 — reduzir na
   migração de cada tela).
@@ -346,6 +349,33 @@ decorativo** (poeira, grão, holofote, lampejo, lampião vira estático) e
 mantém apenas feedback funcional instantâneo.
 
 ---
+
+# SISTEMA DE INTERAÇÃO OPERACIONAL
+
+Feedback de estado como componentes prontos (`components/ui/interacoes.tsx`,
+`Alerta`, `SeloCaixa`) — nunca recriar inline. Regra de tom: **sutil, rápido,
+profissional** — nada caricato, infantil ou futurista; movimento só quando
+comunica estado.
+
+| Estado | Elemento | Componente/Receita | Movimento |
+|---|---|---|---|
+| Loading | Corda de laço + poeira | `<Carregando rotulo telaCheia?>` | `lasso-spin` contínuo; poeira só em tela cheia |
+| Sucesso | Ferradura acesa + reflexo metálico | `<SucessoOperacional titulo>` | `ferradura-acende` + `brilho-metalico` **1×** no mount |
+| Aviso | Placa iluminada + pulso de latão | `<Alerta tipo="aviso">` | `pulso-latao` (brilho de borda 2.4s, suave) |
+| Erro | Metal oxidado + lâmpada vermelha | `<Alerta tipo="erro">` | **ESTÁTICO** — erro não pisca; quem pisca é o SOS |
+| SOS | Lampião de emergência | `<Alerta tipo="sos">` / `SosGerencia` | `lampiao` (tremulação irregular de chama) |
+| Sangria | Malote de couro | `<MaloteSangria valorCentavos registrada?>` | `malote-guarda` 450ms ao registrar |
+| Caixa aberto | Ferradura iluminada | `<SeloCaixa aberto>` | `ferradura-acende` na transição |
+| Caixa fechado | Ferradura apagada (aço) | `<SeloCaixa aberto={false}>` | Nenhum |
+| Admin | Brasão western | `BrasaoIcon` no DashboardLayout | Nenhum |
+| Operador | Distintivo de peão | `DistintivoIcon` no DashboardLayout | Nenhum |
+| Relatório | Livro-caixa + rótulo de whisky | `.material-rotulo` + `LivroCaixaIcon` | Nenhum |
+| CTA latão (hover) | Reflexo metálico | `.brilho-hover` (embutido no `Botao` latão) | Varredura 700ms, 1× por hover/focus |
+
+**Acessibilidade obrigatória:** `Carregando`/`SucessoOperacional`/`MaloteSangria`
+usam `role="status"` + `aria-live="polite"`; alertas usam `role="alert"`;
+TODA animação do sistema é desligada sob `prefers-reduced-motion` (o lampião
+vira estado estático — a informação nunca depende do movimento).
 
 # CHECKLIST PRE-FLIGHT (toda tela nova/migrada)
 

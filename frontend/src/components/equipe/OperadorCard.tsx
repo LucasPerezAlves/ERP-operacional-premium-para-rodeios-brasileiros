@@ -1,6 +1,7 @@
 import Avatar from "../ui/Avatar";
 import Botao from "../ui/Botao";
 import SeloCaixa from "../ui/SeloCaixa";
+import { AjusteIcon, MaloteIcon } from "../icons";
 import type { Operador } from "../../hooks/useGerenciamentoEquipe";
 
 /**
@@ -10,11 +11,17 @@ import type { Operador } from "../../hooks/useGerenciamentoEquipe";
 export default function OperadorCard({
   operador,
   fechando,
+  registrandoSangria,
   onFecharCaixa,
+  onRegistrarSangria,
+  onEditarLimites,
 }: {
   operador: Operador;
   fechando: boolean;
+  registrandoSangria: boolean;
   onFecharCaixa: (operador: Operador) => void;
+  onRegistrarSangria: (operador: Operador) => void;
+  onEditarLimites: (operador: Operador) => void;
 }) {
   const caixaAberto = operador.statusCaixa === "ABERTO";
 
@@ -28,21 +35,42 @@ export default function OperadorCard({
             {operador.areaTrabalho || "Área não informada"}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => onEditarLimites(operador)}
+          aria-label={`Editar limites de numerário de ${operador.nome}`}
+          className="shrink-0 rounded-md p-2 text-steel-400 transition-colors duration-150 ease-couro hover:text-gold-300"
+        >
+          <AjusteIcon className="h-5 w-5" />
+        </button>
       </div>
 
       <SeloCaixa aberto={caixaAberto} saldoCentavos={operador.saldoAtualCentavos} />
 
       {caixaAberto ? (
-        <Botao
-          variante="lampiao"
-          tamanho="md"
-          className="w-full"
-          carregando={fechando}
-          rotuloCarregando="Fechando..."
-          onClick={() => onFecharCaixa(operador)}
-        >
-          Fechar Caixa
-        </Botao>
+        <div className="grid grid-cols-2 gap-3">
+          <Botao
+            variante="couro"
+            tamanho="md"
+            className="w-full"
+            carregando={registrandoSangria}
+            rotuloCarregando="Recolhendo..."
+            onClick={() => onRegistrarSangria(operador)}
+          >
+            <MaloteIcon className="h-4 w-4" />
+            Sangria
+          </Botao>
+          <Botao
+            variante="lampiao"
+            tamanho="md"
+            className="w-full"
+            carregando={fechando}
+            rotuloCarregando="Fechando..."
+            onClick={() => onFecharCaixa(operador)}
+          >
+            Fechar Caixa
+          </Botao>
+        </div>
       ) : (
         <Botao variante="couro" tamanho="md" className="w-full" disabled>
           Nenhum caixa aberto

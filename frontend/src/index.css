@@ -69,6 +69,47 @@
     outline: 1.5px dashed theme("colors.leather.300 / 35%");
     outline-offset: -8px;
   }
+
+  /**
+   * Reflexo metálico no hover: varredura de brilho única sobre superfícies
+   * de latão (CTAs). CSS puro — os keyframes ficam declarados aqui para não
+   * depender de o Tailwind emitir a versão utilitária.
+   */
+  @keyframes brilho-varredura {
+    0% {
+      transform: translateX(-150%) skewX(-15deg);
+    }
+    100% {
+      transform: translateX(300%) skewX(-15deg);
+    }
+  }
+
+  .brilho-hover {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .brilho-hover::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 40%;
+    background: linear-gradient(
+      105deg,
+      transparent,
+      rgba(255, 240, 200, 0.35),
+      transparent
+    );
+    transform: translateX(-150%) skewX(-15deg);
+    pointer-events: none;
+  }
+
+  .brilho-hover:hover::after,
+  .brilho-hover:focus-visible::after {
+    animation: brilho-varredura 0.7s ease-out;
+  }
 }
 
 @layer utilities {
@@ -105,7 +146,14 @@
   .animate-grain-drift,
   .animate-brilho-metalico,
   .animate-lampiao,
-  .animate-ferradura-acende {
+  .animate-ferradura-acende,
+  .animate-pulso-latao,
+  .animate-malote-guarda {
+    animation: none;
+  }
+
+  .brilho-hover:hover::after,
+  .brilho-hover:focus-visible::after {
     animation: none;
   }
 

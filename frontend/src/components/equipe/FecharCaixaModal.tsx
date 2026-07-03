@@ -4,6 +4,8 @@ import Avatar from "../ui/Avatar";
 import Botao from "../ui/Botao";
 import { BackspaceIcon } from "../icons";
 import { formatarCentavos } from "../../lib/moeda";
+import { useValorCentavosDigitado } from "../../hooks/useValorCentavosDigitado";
+import { useTecladoNumerico } from "../../hooks/useTecladoNumerico";
 import type { DadosFechamento, Operador } from "../../hooks/useGerenciamentoEquipe";
 
 const MOTIVOS_SUGERIDOS = [
@@ -11,26 +13,6 @@ const MOTIVOS_SUGERIDOS = [
   "Troca de operador por escala",
   "Quebra de caixa",
 ] as const;
-
-/** Máscara de moeda BR: dígitos digitados se acumulam como centavos (sem parse de vírgula/ponto). */
-function useValorCentavosDigitado() {
-  const [centavos, setCentavos] = useState(0);
-
-  function digitar(tecla: string) {
-    if (!/^\d$/.test(tecla)) return;
-    setCentavos((atual) => {
-      const proximo = atual * 10 + Number(tecla);
-      // Trava em ~R$ 999.999,99 — evita overflow de digitação acidental
-      return proximo > 99_999_999 ? atual : proximo;
-    });
-  }
-
-  function apagar() {
-    setCentavos((atual) => Math.floor(atual / 10));
-  }
-
-  return { centavos, digitar, apagar, zerar: () => setCentavos(0) };
-}
 
 /**
  * Fechamento com conferência física (regra inegociável nº 7): superfície
@@ -50,6 +32,7 @@ export default function FecharCaixaModal({
 }) {
   const { centavos: valorFinalCentavos, digitar, apagar, zerar } = useValorCentavosDigitado();
   const [motivo, setMotivo] = useState("");
+  useTecladoNumerico(digitar, apagar);
 
   const motivoValido = motivo.trim().length > 0;
   const podeConfirmar = valorFinalCentavos > 0 && motivoValido && !enviando;
@@ -109,6 +92,9 @@ export default function FecharCaixaModal({
             Zerar
           </button>
         </div>
+        <p className="mt-2 text-xs text-leather-400/70">
+          Também aceita o teclado do computador — dígitos ou numpad, Backspace apaga.
+        </p>
       </div>
 
       {/* Motivo / justificativa */}
