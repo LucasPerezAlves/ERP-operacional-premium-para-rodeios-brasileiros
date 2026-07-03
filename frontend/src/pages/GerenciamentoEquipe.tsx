@@ -3,13 +3,14 @@ import OperadorCard from "../components/equipe/OperadorCard";
 import FecharCaixaModal from "../components/equipe/FecharCaixaModal";
 import SangriaModal from "../components/equipe/SangriaModal";
 import EditarLimitesModal from "../components/equipe/EditarLimitesModal";
+import ValoresHoraModal from "../components/equipe/ValoresHoraModal";
 import {
   useGerenciamentoEquipe,
   type DadosFechamento,
   type DadosLimites,
   type Operador,
 } from "../hooks/useGerenciamentoEquipe";
-import { LivroCaixaIcon, SearchIcon } from "../components/icons";
+import { CifraoIcon, LivroCaixaIcon, SearchIcon } from "../components/icons";
 import Alerta from "../components/ui/Alerta";
 import Avatar from "../components/ui/Avatar";
 import Botao from "../components/ui/Botao";
@@ -220,6 +221,7 @@ export default function GerenciamentoEquipe() {
     sangria: SangriaApi;
   } | null>(null);
   const [operadorParaLimites, setOperadorParaLimites] = useState<Operador | null>(null);
+  const [mostrarValoresHora, setMostrarValoresHora] = useState(false);
 
   async function confirmarFechamento(dados: DadosFechamento) {
     if (!operadorParaFechar) return;
@@ -251,11 +253,17 @@ export default function GerenciamentoEquipe() {
     <>
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-gold-300 md:text-3xl">Equipe do evento</h1>
-        {!carregando && (
-          <p className="num-tabular text-sm text-steel-400">
-            {operadores.length} de {totalOperadores} operador(es)
-          </p>
-        )}
+        <div className="flex items-center gap-3">
+          {!carregando && (
+            <p className="num-tabular text-sm text-steel-400">
+              {operadores.length} de {totalOperadores} operador(es)
+            </p>
+          )}
+          <Botao variante="couro" tamanho="sm" onClick={() => setMostrarValoresHora(true)}>
+            <CifraoIcon className="h-4 w-4" />
+            Valores
+          </Botao>
+        </div>
       </div>
 
       {erro && (
@@ -363,6 +371,10 @@ export default function GerenciamentoEquipe() {
           onConfirmar={confirmarLimites}
           onCancelar={() => setOperadorParaLimites(null)}
         />
+      )}
+
+      {mostrarValoresHora && (
+        <ValoresHoraModal onFechar={() => setMostrarValoresHora(false)} />
       )}
     </>
   );
