@@ -108,7 +108,7 @@ public class CaixaService {
         var saldoEmEspecie = calcularSaldoEmEspecie(caixa);
         var valorFinal = request.valorFinalConfirmado().setScale(2, RoundingMode.HALF_EVEN);
 
-        caixa.fechar(valorFinal, request.motivo().trim());
+        caixa.fechar(valorFinal, request.motivo().trim(), null, null);
 
         return CaixaResponse.from(caixa, saldoEmEspecie, avaliarNivelAlerta(caixa.getOperadorId(), saldoEmEspecie));
     }
