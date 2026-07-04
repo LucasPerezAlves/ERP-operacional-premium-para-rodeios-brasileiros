@@ -131,4 +131,51 @@ class ValorHoraServiceTest {
         assertThat(resposta.global().alteradoPorNome()).isEqualTo("Admin Teste");
         assertThat(resposta.overridesPorArea()).isEmpty();
     }
+
+    @Test
+    void resolverValorHoraEfetivoAgora_usaOverrideDaAreaQuandoExiste() {
+        var overridePortaria = new ConfiguracaoValorHora(EscopoValorHora.AREA, "Portaria", new BigDecimal("25.00"), adminId);
+        when(repository.findByEscopoAndAreaTrabalhoAndAtivoTrue(EscopoValorHora.AREA, "Portaria"))
+            .thenReturn(Optional.of(overridePortaria));
+
+        var resultado = service.resolverValorHoraEfetivoAgora("Portaria");
+
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get()).isEqualByComparingTo("25.00");
+    }
+
+    @Test
+    void resolverValorHoraEfetivoAgora_caiParaGlobalQuandoAreaNaoTemOverride() {
+        when(repository.findByEscopoAndAreaTrabalhoAndAtivoTrue(EscopoValorHora.AREA, "Bar de Fora"))
+            .thenReturn(Optional.empty());
+        var global = new ConfiguracaoValorHora(EscopoValorHora.GLOBAL, null, new BigDecimal("18.00"), adminId);
+        when(repository.findByEscopoAndAtivoTrue(EscopoValorHora.GLOBAL)).thenReturn(List.of(global));
+
+        var resultado = service.resolverValorHoraEfetivoAgora("Bar de Fora");
+
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get()).isEqualByComparingTo("18.00");
+    }
+
+    @Test
+    void resolverValorHoraEfetivoAgora_retornaVazioQuandoNadaConfigurado() {
+        when(repository.findByEscopoAndAreaTrabalhoAndAtivoTrue(EscopoValorHora.AREA, "Estacionamento"))
+            .thenReturn(Optional.empty());
+        when(repository.findByEscopoAndAtivoTrue(EscopoValorHora.GLOBAL)).thenReturn(List.of());
+
+        var resultado = service.resolverValorHoraEfetivoAgora("Estacionamento");
+
+        assertThat(resultado).isEmpty();
+    }
+
+    @Test
+    void resolverValorHoraEfetivoAgora_usaGlobalDiretoQuandoAreaTrabalhoNula() {
+        var global = new ConfiguracaoValorHora(EscopoValorHora.GLOBAL, null, new BigDecimal("18.00"), adminId);
+        when(repository.findByEscopoAndAtivoTrue(EscopoValorHora.GLOBAL)).thenReturn(List.of(global));
+
+        var resultado = service.resolverValorHoraEfetivoAgora(null);
+
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get()).isEqualByComparingTo("18.00");
+    }
 }

@@ -56,6 +56,26 @@ public class ValorHoraService {
     }
 
     /**
+     * Resolve o valor/hora vigente AGORA para uma área: override da área,
+     * senão o valor global; Optional.empty() se nada estiver configurado
+     * ainda. Nunca lança exceção — o fechamento de caixa não pode ser
+     * bloqueado por falta de configuração (regra de negócio nº 2, adaptada).
+     */
+    @Transactional(readOnly = true)
+    public Optional<BigDecimal> resolverValorHoraEfetivoAgora(String areaTrabalho) {
+        if (areaTrabalho != null) {
+            var override = repository.findByEscopoAndAreaTrabalhoAndAtivoTrue(EscopoValorHora.AREA, areaTrabalho);
+            if (override.isPresent()) {
+                return override.map(ConfiguracaoValorHora::getValorHora);
+            }
+        }
+
+        return repository.findByEscopoAndAtivoTrue(EscopoValorHora.GLOBAL).stream()
+            .findFirst()
+            .map(ConfiguracaoValorHora::getValorHora);
+    }
+
+    /**
      * Substitui o estado inteiro: versiona o valor global se mudou, versiona
      * cada override enviado se mudou/é novo, e encerra os overrides que não
      * vieram mais na lista (a área volta a herdar o valor global).
