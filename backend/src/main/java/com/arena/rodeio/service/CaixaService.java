@@ -2,6 +2,8 @@ package com.arena.rodeio.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,6 +21,7 @@ import com.arena.rodeio.dto.SangriaResponse;
 import com.arena.rodeio.model.Caixa;
 import com.arena.rodeio.model.FormaPagamento;
 import com.arena.rodeio.model.NivelAlertaNumerario;
+import com.arena.rodeio.model.PerfilFuncionario;
 import com.arena.rodeio.model.Sangria;
 import com.arena.rodeio.model.StatusCaixa;
 import com.arena.rodeio.repository.CaixaRepository;
@@ -33,15 +36,18 @@ public class CaixaService {
     private final VendaRepository vendaRepository;
     private final SangriaRepository sangriaRepository;
     private final PerfilFuncionarioRepository perfilFuncionarioRepository;
+    private final ValorHoraService valorHoraService;
 
     public CaixaService(CaixaRepository caixaRepository,
                         VendaRepository vendaRepository,
                         SangriaRepository sangriaRepository,
-                        PerfilFuncionarioRepository perfilFuncionarioRepository) {
+                        PerfilFuncionarioRepository perfilFuncionarioRepository,
+                        ValorHoraService valorHoraService) {
         this.caixaRepository = caixaRepository;
         this.vendaRepository = vendaRepository;
         this.sangriaRepository = sangriaRepository;
         this.perfilFuncionarioRepository = perfilFuncionarioRepository;
+        this.valorHoraService = valorHoraService;
     }
 
     /**
@@ -93,6 +99,12 @@ public class CaixaService {
      * junto com o saldo calculado no momento — a divergência entre os dois
      * (sobra/falta) fica registrada para sempre, mesmo que vendas futuras de
      * OUTRO caixa mudem os totais do operador.
+     *
+     * Também grava o snapshot de jornada (regra de negócio nova, controle de
+     * jornada operacional): valor/hora resolvido AGORA (área do operador,
+     * senão global) multiplicado pelas horas do turno inteiro. Se não houver
+     * valor/hora configurado, o snapshot fica null — o fechamento NUNCA é
+     * bloqueado por isso.
      */
     @Transactional
     public CaixaResponse fechar(UUID caixaId, FecharCaixaRequest request) {
@@ -108,7 +120,17 @@ public class CaixaService {
         var saldoEmEspecie = calcularSaldoEmEspecie(caixa);
         var valorFinal = request.valorFinalConfirmado().setScale(2, RoundingMode.HALF_EVEN);
 
-        caixa.fechar(valorFinal, request.motivo().trim(), null, null);
+        var areaTrabalho = perfilFuncionarioRepository.findById(caixa.getOperadorId())
+            .map(PerfilFuncionario::getAreaTrabalho)
+            .orElse(null);
+        var valorHoraAplicado = valorHoraService.resolverValorHoraEfetivoAgora(areaTrabalho).orElse(null);
+        var minutosTrabalhados = Duration.between(caixa.getDataAbertura(), Instant.now()).toMinutes();
+        var valorTotalCalculado = valorHoraAplicado == null
+            ? null
+            : valorHoraAplicado.multiply(BigDecimal.valueOf(minutosTrabalhados))
+                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_EVEN);
+
+        caixa.fechar(valorFinal, request.motivo().trim(), valorHoraAplicado, valorTotalCalculado);
 
         return CaixaResponse.from(caixa, saldoEmEspecie, avaliarNivelAlerta(caixa.getOperadorId(), saldoEmEspecie));
     }

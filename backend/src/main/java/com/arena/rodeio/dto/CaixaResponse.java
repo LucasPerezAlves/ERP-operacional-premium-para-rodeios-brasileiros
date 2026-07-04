@@ -1,6 +1,7 @@
 package com.arena.rodeio.dto;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -27,12 +28,21 @@ public record CaixaResponse(
      */
     BigDecimal divergencia,
     /** Nível de numerário em espécie (regra de negócio nº 2) — nunca bloqueia venda. */
-    NivelAlertaNumerario nivelAlerta
+    NivelAlertaNumerario nivelAlerta,
+    /** Controle de jornada operacional: null enquanto o caixa está ABERTO. */
+    Long minutosTrabalhados,
+    /** Snapshot imutável do valor/hora vigente no fechamento — null se não configurado. */
+    BigDecimal valorHoraAplicado,
+    /** minutosTrabalhados/60 * valorHoraAplicado — null se valorHoraAplicado for null. */
+    BigDecimal valorTotalCalculado
 ) {
 
     public static CaixaResponse from(Caixa caixa, BigDecimal saldoEmEspecie, NivelAlertaNumerario nivelAlerta) {
         var valorFinal = caixa.getValorFinalConfirmado();
         var divergencia = valorFinal == null ? null : valorFinal.subtract(saldoEmEspecie);
+        var minutosTrabalhados = caixa.getStatus() == StatusCaixa.FECHADO
+            ? Duration.between(caixa.getDataAbertura(), caixa.getDataFechamento()).toMinutes()
+            : null;
 
         return new CaixaResponse(
             caixa.getId(),
@@ -46,6 +56,9 @@ public record CaixaResponse(
             valorFinal,
             caixa.getMotivoFechamento(),
             divergencia,
-            nivelAlerta);
+            nivelAlerta,
+            minutosTrabalhados,
+            caixa.getValorHoraAplicado(),
+            caixa.getValorTotalCalculado());
     }
 }
