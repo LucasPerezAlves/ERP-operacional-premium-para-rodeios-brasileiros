@@ -4,6 +4,7 @@ import {
   HorseshoeIcon,
   LivroCaixaIcon,
   PlacaIcon,
+  RelogioIcon,
   SetaDireitaIcon,
 } from "../components/icons";
 
@@ -85,6 +86,24 @@ export default function AdminLandingPage() {
           </div>
           <span className="inline-flex items-center gap-2 text-sm font-semibold text-gold-400">
             Ver histórico
+            <SetaDireitaIcon className="h-4 w-4 transition-transform duration-200 ease-couro group-hover:translate-x-1" />
+          </span>
+        </Link>
+
+        {/* Ação secundária: relatório de jornada */}
+        <Link
+          to="/admin-dashboard/historico-turnos"
+          className="group flex flex-col justify-between gap-6 rounded-xl border border-leather-600/40 bg-wood-900 p-7 shadow-arena transition-colors duration-200 ease-couro hover:border-gold-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold-400/30"
+        >
+          <div>
+            <RelogioIcon className="h-9 w-9 text-leather-300 transition-colors duration-200 group-hover:text-gold-400" />
+            <h3 className="mt-4 font-display text-xl text-gold-300">Histórico de Turnos</h3>
+            <p className="mt-2 text-[15px] leading-relaxed text-leather-300">
+              Entrada, saída, horas trabalhadas e valor devido de cada turno já fechado.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-gold-400">
+            Ver turnos
             <SetaDireitaIcon className="h-4 w-4 transition-transform duration-200 ease-couro group-hover:translate-x-1" />
           </span>
         </Link>

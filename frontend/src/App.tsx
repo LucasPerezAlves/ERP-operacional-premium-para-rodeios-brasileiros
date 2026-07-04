@@ -6,6 +6,7 @@ import AuthPage from "./pages/AuthPage";
 import AdminLandingPage from "./pages/AdminLandingPage";
 import AdminAbrirCaixa from "./pages/AdminAbrirCaixa";
 import AdminScorecard from "./pages/AdminScorecard";
+import HistoricoTurnos from "./pages/HistoricoTurnos";
 import GerenciamentoEquipe from "./pages/GerenciamentoEquipe";
 import OperadorLandingPage from "./pages/OperadorLandingPage";
 import OperadorVenda from "./pages/OperadorVenda";
@@ -17,6 +18,7 @@ import OperadorVenda from "./pages/OperadorVenda";
  * - "/admin-dashboard/abrir-caixa" → Abertura de caixa (regra inegociável nº 7)
  * - "/admin-dashboard/equipe"      → Gerenciamento de Equipe (status + fechamento)
  * - "/admin-dashboard/scorecard"   → Scorecard de Divergência de Operadores
+ * - "/admin-dashboard/historico-turnos" → Histórico de Turnos (jornada operacional)
  * - "/operador-dashboard"          → Landing do OPERADOR (status + funções)
  * - "/operador-dashboard/venda"    → PDV de venda (só com caixa aberto)
  */
@@ -39,6 +41,7 @@ export default function App() {
             <Route path="/admin-dashboard/abrir-caixa" element={<AdminAbrirCaixa />} />
             <Route path="/admin-dashboard/equipe" element={<GerenciamentoEquipe />} />
             <Route path="/admin-dashboard/scorecard" element={<AdminScorecard />} />
+            <Route path="/admin-dashboard/historico-turnos" element={<HistoricoTurnos />} />
           </Route>
           <Route
             path="/operador-dashboard"

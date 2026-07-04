@@ -7,6 +7,7 @@ import {
   HorseshoeIcon,
   LivroCaixaIcon,
   PlacaIcon,
+  RelogioIcon,
   SetaEsquerdaIcon,
 } from "../icons";
 import Avatar from "../ui/Avatar";
@@ -21,6 +22,7 @@ const ITENS_OPERACAO: ItemNavegacao[] = [
   { rotulo: "Abrir Caixa", icone: HorseshoeIcon, rota: "/admin-dashboard/abrir-caixa" },
   { rotulo: "Gerenciar Equipe", icone: DistintivoIcon, rota: "/admin-dashboard/equipe" },
   { rotulo: "Scorecard", icone: LivroCaixaIcon, rota: "/admin-dashboard/scorecard" },
+  { rotulo: "Histórico de Turnos", icone: RelogioIcon, rota: "/admin-dashboard/historico-turnos" },
 ];
 
 /** Módulos do roadmap ainda sem rota — placa de arena, apagados, sem clique. */

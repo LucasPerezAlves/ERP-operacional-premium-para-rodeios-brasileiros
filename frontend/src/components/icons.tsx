@@ -398,3 +398,14 @@ export function CifraoIcon({ className = "h-5 w-5" }: { className?: string }) {
     </svg>
   );
 }
+
+/** Relógio de bolso — Histórico de Turnos (jornada operacional). */
+export function RelogioIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
+      <circle cx={12} cy={13} r={8} stroke="currentColor" strokeWidth={1.8} />
+      <path d="M12 9v4l3 2" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.5 2.5h5M12 2.5V5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+    </svg>
+  );
+}
