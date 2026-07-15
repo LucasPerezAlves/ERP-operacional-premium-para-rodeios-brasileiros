@@ -6,6 +6,7 @@ import { Carregando } from "../components/ui/interacoes";
 import { useScorecard, type OperadorScorecard } from "../hooks/useScorecard";
 import { extrairAreasDisponiveis } from "../hooks/useGerenciamentoEquipe";
 import { formatarCentavos } from "../lib/moeda";
+import { formatarDuracao } from "../lib/tempo";
 import { LivroCaixaIcon, PlacaIcon } from "../components/icons";
 
 /** Card do operador: histórico de fechamentos + divergência acumulada + padrão a investigar. */
@@ -42,6 +43,18 @@ function ScorecardCard({ operador }: { operador: OperadorScorecard }) {
             {divergencia === 0
               ? "Conferido"
               : `${divergencia > 0 ? "+" : "−"}${formatarCentavos(Math.abs(divergencia))}`}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-steel-400">Horas trabalhadas</dt>
+          <dd className="num-tabular text-lg font-semibold text-leather-200">
+            {formatarDuracao(operador.totalMinutosTrabalhados)}
+          </dd>
+        </div>
+        <div className="text-right">
+          <dt className="text-xs text-steel-400">Valor devido</dt>
+          <dd className="num-tabular text-lg font-semibold text-gold-300">
+            {formatarCentavos(operador.totalValorDevidoCentavos)}
           </dd>
         </div>
       </dl>

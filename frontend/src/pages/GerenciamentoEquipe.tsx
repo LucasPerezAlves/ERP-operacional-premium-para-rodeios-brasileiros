@@ -3,13 +3,14 @@ import OperadorCard from "../components/equipe/OperadorCard";
 import FecharCaixaModal from "../components/equipe/FecharCaixaModal";
 import SangriaModal from "../components/equipe/SangriaModal";
 import EditarLimitesModal from "../components/equipe/EditarLimitesModal";
+import ValoresHoraModal from "../components/equipe/ValoresHoraModal";
 import {
   useGerenciamentoEquipe,
   type DadosFechamento,
   type DadosLimites,
   type Operador,
 } from "../hooks/useGerenciamentoEquipe";
-import { LivroCaixaIcon, SearchIcon } from "../components/icons";
+import { CifraoIcon, LivroCaixaIcon, SearchIcon } from "../components/icons";
 import Alerta from "../components/ui/Alerta";
 import Avatar from "../components/ui/Avatar";
 import Botao from "../components/ui/Botao";
@@ -18,6 +19,7 @@ import { Carregando, MaloteSangria } from "../components/ui/interacoes";
 import FiltroArea from "../components/ui/FiltroArea";
 import SeloNumerario from "../components/ui/SeloNumerario";
 import { formatarCentavos, reaisParaCentavos } from "../lib/moeda";
+import { formatarDuracao } from "../lib/tempo";
 import type { CaixaApi, SangriaApi } from "../lib/api";
 
 /**
@@ -148,6 +150,48 @@ function ComprovanteFechamento({
         </dl>
       </div>
 
+      {caixa.dataFechamento && (
+        <div className="material-rotulo mt-4 rounded-xl bg-arena-900 p-6">
+          <p className="font-display text-lg text-gold-300">Resumo Operacional</p>
+          <dl className="mt-3 space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-sm text-leather-300">Entrada</dt>
+              <dd className="num-tabular text-sm font-semibold text-leather-200">
+                {new Date(caixa.dataAbertura).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-sm text-leather-300">Saída</dt>
+              <dd className="num-tabular text-sm font-semibold text-leather-200">
+                {new Date(caixa.dataFechamento).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </dd>
+            </div>
+            {caixa.minutosTrabalhados !== null && (
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-sm text-leather-300">Horas</dt>
+                <dd className="num-tabular text-sm font-semibold text-leather-200">
+                  {formatarDuracao(caixa.minutosTrabalhados)}
+                </dd>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-4 border-t-2 border-gold-500/40 pt-3">
+              <dt className="text-sm font-semibold text-leather-200">Valor devido</dt>
+              {caixa.valorTotalCalculado === null ? (
+                <dd className="text-sm text-steel-400">Valor/hora não configurado para esta área</dd>
+              ) : (
+                <dd className="num-tabular text-lg font-bold text-gold-300">
+                  {formatarCentavos(reaisParaCentavos(caixa.valorTotalCalculado))}
+                  <span className="ml-2 text-xs font-normal text-steel-400">
+                    ({formatarCentavos(reaisParaCentavos(caixa.valorHoraAplicado ?? 0))}/h)
+                  </span>
+                </dd>
+              )}
+            </div>
+          </dl>
+        </div>
+      )}
+
       <Botao variante="latao" tamanho="lg" className="mt-6 w-full" onClick={onConcluir}>
         Concluir
       </Botao>
@@ -220,6 +264,7 @@ export default function GerenciamentoEquipe() {
     sangria: SangriaApi;
   } | null>(null);
   const [operadorParaLimites, setOperadorParaLimites] = useState<Operador | null>(null);
+  const [mostrarValoresHora, setMostrarValoresHora] = useState(false);
 
   async function confirmarFechamento(dados: DadosFechamento) {
     if (!operadorParaFechar) return;
@@ -251,11 +296,17 @@ export default function GerenciamentoEquipe() {
     <>
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-gold-300 md:text-3xl">Equipe do evento</h1>
-        {!carregando && (
-          <p className="num-tabular text-sm text-steel-400">
-            {operadores.length} de {totalOperadores} operador(es)
-          </p>
-        )}
+        <div className="flex items-center gap-3">
+          {!carregando && (
+            <p className="num-tabular text-sm text-steel-400">
+              {operadores.length} de {totalOperadores} operador(es)
+            </p>
+          )}
+          <Botao variante="couro" tamanho="sm" onClick={() => setMostrarValoresHora(true)}>
+            <CifraoIcon className="h-4 w-4" />
+            Valores
+          </Botao>
+        </div>
       </div>
 
       {erro && (
@@ -363,6 +414,10 @@ export default function GerenciamentoEquipe() {
           onConfirmar={confirmarLimites}
           onCancelar={() => setOperadorParaLimites(null)}
         />
+      )}
+
+      {mostrarValoresHora && (
+        <ValoresHoraModal onFechar={() => setMostrarValoresHora(false)} />
       )}
     </>
   );

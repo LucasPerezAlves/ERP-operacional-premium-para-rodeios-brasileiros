@@ -6,6 +6,10 @@ export interface FechamentoOperador {
   caixaId: string;
   dataFechamento: string;
   divergenciaCentavos: number;
+  /** null quando não havia valor/hora configurado neste fechamento — não soma, não zera. */
+  minutosTrabalhados: number | null;
+  /** null quando não havia valor/hora configurado neste fechamento — não soma, não zera. */
+  valorTotalCalculadoCentavos: number | null;
 }
 
 export interface OperadorScorecard {
@@ -18,6 +22,10 @@ export interface OperadorScorecard {
   somaDivergenciaCentavos: number;
   /** Valor absoluto que se repetiu 2+ vezes nas faltas/sobras — padrão a investigar (regra de negócio nº 3). */
   padraoRecorrenteCentavos: number | null;
+  /** Soma apenas dos turnos com snapshot de jornada — turnos sem valor/hora configurado são ignorados, não zerados. */
+  totalMinutosTrabalhados: number;
+  /** Idem: soma apenas dos turnos com valorTotalCalculado != null. */
+  totalValorDevidoCentavos: number;
 }
 
 /** Acha o valor absoluto de divergência mais recorrente (mín. 2 ocorrências), se houver. */
@@ -67,6 +75,9 @@ export function useScorecard() {
           caixaId: caixa.id,
           dataFechamento: caixa.dataFechamento,
           divergenciaCentavos: reaisParaCentavos(caixa.divergencia),
+          minutosTrabalhados: caixa.minutosTrabalhados,
+          valorTotalCalculadoCentavos:
+            caixa.valorTotalCalculado === null ? null : reaisParaCentavos(caixa.valorTotalCalculado),
         });
         fechamentosPorOperador.set(caixa.operadorId, fechamentos);
       }
@@ -87,6 +98,14 @@ export function useScorecard() {
                 0,
               ),
               padraoRecorrenteCentavos: detectarPadraoRecorrente(fechamentos),
+              totalMinutosTrabalhados: fechamentos.reduce(
+                (soma, fechamento) => soma + (fechamento.minutosTrabalhados ?? 0),
+                0,
+              ),
+              totalValorDevidoCentavos: fechamentos.reduce(
+                (soma, fechamento) => soma + (fechamento.valorTotalCalculadoCentavos ?? 0),
+                0,
+              ),
             };
           })
           .filter((operador) => operador.totalFechamentos > 0)

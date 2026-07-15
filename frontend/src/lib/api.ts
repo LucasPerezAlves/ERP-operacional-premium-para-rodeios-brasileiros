@@ -27,6 +27,12 @@ export interface CaixaApi {
   divergencia: number | null;
   /** Nível de numerário em espécie (regra de negócio nº 2) — nunca bloqueia venda. */
   nivelAlerta: NivelAlertaNumerario;
+  /** Controle de jornada operacional: null enquanto o caixa está ABERTO. */
+  minutosTrabalhados: number | null;
+  /** Snapshot imutável do valor/hora vigente no fechamento — null se não configurado. */
+  valorHoraAplicado: number | null;
+  /** minutosTrabalhados/60 * valorHoraAplicado — null se valorHoraAplicado for null. */
+  valorTotalCalculado: number | null;
 }
 
 export interface VendaApi {
@@ -47,6 +53,14 @@ export interface SangriaApi {
   registradaEm: string;
   /** Espécie restante no caixa após o recolhimento. */
   saldoEmEspecie: number;
+}
+
+export interface SangriaResumoApi {
+  id: string;
+  caixaId: string;
+  operadorId: string;
+  valor: number;
+  registradaEm: string;
 }
 
 export interface SosAlertaApi {
@@ -74,6 +88,33 @@ export interface FuncionarioApi {
   limiteAtencao: number;
   limiteCritico: number;
   ativo: boolean;
+}
+
+export interface ValorVigenteApi {
+  /** null quando é o valor global (sem área específica). */
+  areaTrabalho: string | null;
+  valorHora: number;
+  vigenciaInicio: string;
+  alteradoPorAdminId: string;
+  alteradoPorNome: string;
+}
+
+export interface ValorHoraAtualApi {
+  /** null quando nenhum admin configurou um valor global ainda. */
+  global: ValorVigenteApi | null;
+  overridesPorArea: ValorVigenteApi[];
+}
+
+export interface HistoricoValorHoraApi {
+  id: string;
+  escopo: "GLOBAL" | "AREA";
+  areaTrabalho: string | null;
+  valorHora: number;
+  vigenciaInicio: string;
+  vigenciaFim: string | null;
+  ativo: boolean;
+  alteradoPorAdminId: string;
+  alteradoPorNome: string;
 }
 
 export class ApiError extends Error {
@@ -257,4 +298,39 @@ export function listarCaixasAbertos(): Promise<CaixaApi[]> {
 /** Exclusivo do Admin — Scorecard de Divergência de Operadores. */
 export function listarCaixasFechados(): Promise<CaixaApi[]> {
   return request<CaixaApi[]>("/api/caixas/fechados", "GET") as Promise<CaixaApi[]>;
+}
+
+/** Exclusivo do Admin — Activity Feed do Centro de Operações do Evento. */
+export function listarSangrias(): Promise<SangriaResumoApi[]> {
+  return request<SangriaResumoApi[]>("/api/caixas/sangrias", "GET") as Promise<SangriaResumoApi[]>;
+}
+
+/** Exclusivo do Admin — estado efetivo atual (valor global + overrides por área). */
+export function buscarValoresHora(): Promise<ValorHoraAtualApi> {
+  return request<ValorHoraAtualApi>("/api/valores-hora", "GET") as Promise<ValorHoraAtualApi>;
+}
+
+/** Exclusivo do Admin — histórico completo (vigências fechadas e ativas). */
+export function buscarHistoricoValoresHora(): Promise<HistoricoValorHoraApi[]> {
+  return request<HistoricoValorHoraApi[]>("/api/valores-hora/historico", "GET") as Promise<
+    HistoricoValorHoraApi[]
+  >;
+}
+
+/**
+ * Exclusivo do Admin — salva o valor global e a lista completa de overrides
+ * por área (payload substitui o estado inteiro; o back-end versiona só o
+ * que mudou).
+ */
+export function salvarValoresHora(dados: {
+  valorHoraGlobalCentavos: number;
+  overrides: Array<{ area: string; valorHoraCentavos: number }>;
+}): Promise<ValorHoraAtualApi> {
+  return request<ValorHoraAtualApi>("/api/valores-hora", "PUT", {
+    valorHoraGlobal: centavosParaReais(dados.valorHoraGlobalCentavos),
+    overrides: dados.overrides.map((item) => ({
+      area: item.area,
+      valorHora: centavosParaReais(item.valorHoraCentavos),
+    })),
+  }) as Promise<ValorHoraAtualApi>;
 }

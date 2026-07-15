@@ -59,6 +59,12 @@ public class Caixa {
     @Column(name = "motivo_fechamento")
     private String motivoFechamento;
 
+    @Column(name = "valor_hora_aplicado", precision = 12, scale = 2)
+    private BigDecimal valorHoraAplicado;
+
+    @Column(name = "valor_total_calculado", precision = 12, scale = 2)
+    private BigDecimal valorTotalCalculado;
+
     protected Caixa() {
         // exigido pelo JPA
     }
@@ -74,11 +80,14 @@ public class Caixa {
         this.dataAbertura = Instant.now();
     }
 
-    public void fechar(BigDecimal valorFinalConfirmado, String motivoFechamento) {
+    public void fechar(BigDecimal valorFinalConfirmado, String motivoFechamento,
+                        BigDecimal valorHoraAplicado, BigDecimal valorTotalCalculado) {
         this.status = StatusCaixa.FECHADO;
         this.dataFechamento = Instant.now();
         this.valorFinalConfirmado = valorFinalConfirmado;
         this.motivoFechamento = motivoFechamento;
+        this.valorHoraAplicado = valorHoraAplicado;
+        this.valorTotalCalculado = valorTotalCalculado;
     }
 
     public boolean estaAberto() {
@@ -121,5 +130,13 @@ public class Caixa {
 
     public String getMotivoFechamento() {
         return motivoFechamento;
+    }
+
+    public BigDecimal getValorHoraAplicado() {
+        return valorHoraAplicado;
+    }
+
+    public BigDecimal getValorTotalCalculado() {
+        return valorTotalCalculado;
     }
 }

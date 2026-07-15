@@ -22,6 +22,7 @@ import com.arena.rodeio.dto.CaixaResponse;
 import com.arena.rodeio.dto.FecharCaixaRequest;
 import com.arena.rodeio.dto.SangriaRequest;
 import com.arena.rodeio.dto.SangriaResponse;
+import com.arena.rodeio.dto.SangriaResumoResponse;
 import com.arena.rodeio.dto.VendaRequest;
 import com.arena.rodeio.dto.VendaResponse;
 import com.arena.rodeio.service.CaixaService;
@@ -127,6 +128,13 @@ public class CaixaController {
     @PreAuthorize("hasRole('MASTER_ADMIN')")
     public List<CaixaResponse> listarFechados() {
         return caixaService.listarFechados();
+    }
+
+    /** Lista todas as sangrias já registradas — Activity Feed do Centro de Operações. */
+    @GetMapping("/sangrias")
+    @PreAuthorize("hasRole('MASTER_ADMIN')")
+    public List<SangriaResumoResponse> listarSangrias() {
+        return caixaService.listarTodasSangrias();
     }
 
     private static UUID usuarioId(Jwt jwt) {

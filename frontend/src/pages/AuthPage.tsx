@@ -26,17 +26,7 @@ import {
 import Alerta from "../components/ui/Alerta";
 import Botao from "../components/ui/Botao";
 import { SucessoOperacional } from "../components/ui/interacoes";
-
-/** Postos do evento — usados pelo Admin para localizar o operador (backlog). */
-const AREAS_TRABALHO = [
-  "Bar de Fora",
-  "Bar Interno",
-  "Portaria",
-  "Estacionamento",
-  "Bilheteria",
-  "Cozinha",
-  "Segurança",
-] as const;
+import { AREAS_TRABALHO } from "../constants/areasTrabalho";
 
 // ---------------------------------------------------------------------------
 // Tipos do estado de autenticação (lógica intacta)
