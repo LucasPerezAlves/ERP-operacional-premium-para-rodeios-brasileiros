@@ -18,6 +18,7 @@ import com.arena.rodeio.dto.CaixaResponse;
 import com.arena.rodeio.dto.FecharCaixaRequest;
 import com.arena.rodeio.dto.SangriaRequest;
 import com.arena.rodeio.dto.SangriaResponse;
+import com.arena.rodeio.dto.SangriaResumoResponse;
 import com.arena.rodeio.model.Caixa;
 import com.arena.rodeio.model.FormaPagamento;
 import com.arena.rodeio.model.NivelAlertaNumerario;
@@ -91,6 +92,19 @@ public class CaixaService {
         var sangria = sangriaRepository.save(new Sangria(caixa, adminId, valor));
 
         return SangriaResponse.from(sangria, saldoAtual.subtract(valor));
+    }
+
+    /**
+     * Lista todas as sangrias já registradas, mais recentes primeiro —
+     * alimenta o Activity Feed do Centro de Operações do Evento. Resumo
+     * enxuto (sem saldoEmEspecie) porque o feed só precisa mostrar
+     * "quanto, quando, de qual operador".
+     */
+    @Transactional(readOnly = true)
+    public List<SangriaResumoResponse> listarTodasSangrias() {
+        return sangriaRepository.findAllByOrderByRegistradaEmDesc().stream()
+            .map(SangriaResumoResponse::from)
+            .toList();
     }
 
     /**

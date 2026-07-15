@@ -1,6 +1,7 @@
 package com.arena.rodeio.repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,4 +18,7 @@ public interface SangriaRepository extends JpaRepository<Sangria, UUID> {
         where s.caixa.id = :caixaId
         """)
     BigDecimal somarPorCaixa(@Param("caixaId") UUID caixaId);
+
+    /** Mais recente primeiro — alimenta o Activity Feed do Centro de Operações. */
+    List<Sangria> findAllByOrderByRegistradaEmDesc();
 }

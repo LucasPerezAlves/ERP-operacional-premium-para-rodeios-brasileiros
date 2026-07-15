@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.arena.rodeio.dto.FecharCaixaRequest;
 import com.arena.rodeio.model.Caixa;
 import com.arena.rodeio.model.PerfilFuncionario;
+import com.arena.rodeio.model.Sangria;
 import com.arena.rodeio.repository.CaixaRepository;
 import com.arena.rodeio.repository.PerfilFuncionarioRepository;
 import com.arena.rodeio.repository.SangriaRepository;
@@ -105,5 +107,35 @@ class CaixaServiceTest {
             org.mockito.ArgumentMatchers.eq("Fim de turno"),
             org.mockito.ArgumentMatchers.isNull(),
             org.mockito.ArgumentMatchers.isNull());
+    }
+
+    @Test
+    void listarTodasSangrias_retornaResumoComOperadorIdDoCaixa() {
+        var operadorId = UUID.randomUUID();
+        var caixaId = UUID.randomUUID();
+        var sangriaId = UUID.randomUUID();
+        var agora = Instant.now();
+
+        var caixa = mock(Caixa.class);
+        when(caixa.getId()).thenReturn(caixaId);
+        when(caixa.getOperadorId()).thenReturn(operadorId);
+
+        var sangria = mock(Sangria.class);
+        when(sangria.getId()).thenReturn(sangriaId);
+        when(sangria.getCaixa()).thenReturn(caixa);
+        when(sangria.getValor()).thenReturn(new BigDecimal("50.00"));
+        when(sangria.getRegistradaEm()).thenReturn(agora);
+
+        when(sangriaRepository.findAllByOrderByRegistradaEmDesc()).thenReturn(List.of(sangria));
+
+        var resultado = service.listarTodasSangrias();
+
+        assertThat(resultado).hasSize(1);
+        var resumo = resultado.get(0);
+        assertThat(resumo.id()).isEqualTo(sangriaId);
+        assertThat(resumo.caixaId()).isEqualTo(caixaId);
+        assertThat(resumo.operadorId()).isEqualTo(operadorId);
+        assertThat(resumo.valor()).isEqualByComparingTo("50.00");
+        assertThat(resumo.registradaEm()).isEqualTo(agora);
     }
 }
