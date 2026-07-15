@@ -55,6 +55,14 @@ export interface SangriaApi {
   saldoEmEspecie: number;
 }
 
+export interface SangriaResumoApi {
+  id: string;
+  caixaId: string;
+  operadorId: string;
+  valor: number;
+  registradaEm: string;
+}
+
 export interface SosAlertaApi {
   id: string;
   caixaId: string;
@@ -290,6 +298,11 @@ export function listarCaixasAbertos(): Promise<CaixaApi[]> {
 /** Exclusivo do Admin — Scorecard de Divergência de Operadores. */
 export function listarCaixasFechados(): Promise<CaixaApi[]> {
   return request<CaixaApi[]>("/api/caixas/fechados", "GET") as Promise<CaixaApi[]>;
+}
+
+/** Exclusivo do Admin — Activity Feed do Centro de Operações do Evento. */
+export function listarSangrias(): Promise<SangriaResumoApi[]> {
+  return request<SangriaResumoApi[]>("/api/caixas/sangrias", "GET") as Promise<SangriaResumoApi[]>;
 }
 
 /** Exclusivo do Admin — estado efetivo atual (valor global + overrides por área). */
