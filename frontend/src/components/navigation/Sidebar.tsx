@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../lib/auth";
 import { useSidebar } from "../../hooks/useSidebar";
 import {
@@ -40,18 +40,48 @@ const ITENS_NO_CURRAL: ItemNavegacao[] = [
  * mobile (aberto pelo botão ☰ do AdminLayout). Madeira maciça com grão,
  * dobradiça de aço na borda e costura de sela entre as seções.
  */
+/** Atraso antes de recolher de volta ao tirar o mouse — evita flicker ao cruzar a borda rápido. */
+const ATRASO_FECHAR_PAIRO_MS = 150;
+
 export default function Sidebar() {
   const { recolhida, drawerAberto, fecharDrawer } = useSidebar();
+  const [pairoAtivo, setPairoAtivo] = useState(false);
+  const timeoutFecharRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutFecharRef.current) clearTimeout(timeoutFecharRef.current);
+    };
+  }, []);
+
+  function aoEntrarNaSidebar() {
+    if (timeoutFecharRef.current) {
+      clearTimeout(timeoutFecharRef.current);
+      timeoutFecharRef.current = null;
+    }
+    setPairoAtivo(true);
+  }
+
+  function aoSairDaSidebar() {
+    timeoutFecharRef.current = setTimeout(() => setPairoAtivo(false), ATRASO_FECHAR_PAIRO_MS);
+  }
+
+  // Recolhida (72px) "paira" para 280px por cima do conteúdo ao passar o
+  // mouse — o padding do AdminLayout só reage à preferência fixada por
+  // clique (recolhida), nunca a este estado local, então não há "pulo".
+  const visualRecolhida = recolhida && !pairoAtivo;
 
   return (
     <>
       {/* Coluna fixa (tablet/desktop) */}
       <aside
+        onMouseEnter={aoEntrarNaSidebar}
+        onMouseLeave={aoSairDaSidebar}
         className={`fixed inset-y-0 left-0 z-40 hidden border-r border-steel-800 bg-wood-950 shadow-arena transition-[width] duration-300 ease-couro sm:block ${
-          recolhida ? "w-[72px]" : "w-[280px]"
+          visualRecolhida ? "w-[72px]" : "w-[280px]"
         }`}
       >
-        <ConteudoSidebar recolhida={recolhida} mostrarToggle />
+        <ConteudoSidebar recolhida={visualRecolhida} mostrarToggle />
       </aside>
 
       {/* Drawer lateral (mobile) */}
