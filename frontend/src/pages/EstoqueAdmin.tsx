@@ -3,6 +3,7 @@ import Alerta from "../components/ui/Alerta";
 import { Carregando } from "../components/ui/interacoes";
 import Botao from "../components/ui/Botao";
 import ProdutoModal from "../components/estoque/ProdutoModal";
+import Modal from "../components/ui/Modal";
 import { useEstoque, type Produto, type DadosProduto } from "../hooks/useEstoque";
 import { formatarCentavos } from "../lib/moeda";
 import { CaixoteIcon, PlacaIcon } from "../components/icons";
@@ -24,6 +25,7 @@ export default function EstoqueAdmin() {
     useEstoque();
   const [modalAberto, setModalAberto] = useState(false);
   const [produtoEditando, setProdutoEditando] = useState<Produto | null>(null);
+  const [produtoParaDesativar, setProdutoParaDesativar] = useState<Produto | null>(null);
 
   function abrirNovo() {
     setProdutoEditando(null);
@@ -105,7 +107,7 @@ export default function EstoqueAdmin() {
                         tamanho="sm"
                         carregando={salvandoId === produto.id}
                         rotuloCarregando="..."
-                        onClick={() => handleDesativar(produto.id)}
+                        onClick={() => setProdutoParaDesativar(produto)}
                       >
                         Desativar
                       </Botao>
@@ -125,6 +127,33 @@ export default function EstoqueAdmin() {
           onConfirmar={confirmar}
           onCancelar={() => setModalAberto(false)}
         />
+      )}
+
+      {produtoParaDesativar && (
+        <Modal titulo="Desativar produto" onFechar={() => setProdutoParaDesativar(null)}>
+          <p className="mt-4 text-[15px] text-leather-300">
+            Desativar <span className="font-semibold text-leather-200">{produtoParaDesativar.nome}</span>?
+            Ele deixa de aparecer na lista de produtos ativos. Não há uma tela de reativação ainda —
+            seria preciso reverter direto no banco.
+          </p>
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            <Botao variante="couro" tamanho="lg" onClick={() => setProdutoParaDesativar(null)}>
+              Cancelar
+            </Botao>
+            <Botao
+              variante="lampiao"
+              tamanho="lg"
+              carregando={salvandoId === produtoParaDesativar.id}
+              rotuloCarregando="Desativando..."
+              onClick={async () => {
+                const sucesso = await handleDesativar(produtoParaDesativar.id);
+                if (sucesso) setProdutoParaDesativar(null);
+              }}
+            >
+              Confirmar
+            </Botao>
+          </div>
+        </Modal>
       )}
     </>
   );
