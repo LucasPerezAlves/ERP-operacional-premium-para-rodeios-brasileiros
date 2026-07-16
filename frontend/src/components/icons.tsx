@@ -409,3 +409,24 @@ export function RelogioIcon({ className = "h-5 w-5" }: { className?: string }) {
     </svg>
   );
 }
+
+/** Caixote de madeira — Estoque (cadastro de produtos, Módulo 3). */
+export function CaixoteIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
+      <path
+        d="M3.5 8.5 12 4l8.5 4.5-8.5 4.5-8.5-4.5Z"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3.5 8.5V16l8.5 4.5V13M20.5 8.5V16L12 20.5"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <path d="M3.5 8.5 12 13l8.5-4.5" stroke="currentColor" strokeWidth={1.8} strokeLinejoin="round" />
+    </svg>
+  );
+}
