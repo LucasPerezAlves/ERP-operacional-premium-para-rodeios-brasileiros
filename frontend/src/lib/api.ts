@@ -12,6 +12,8 @@ const API_URL: string = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 export type FormaPagamento = "DINHEIRO" | "DEBITO" | "CREDITO" | "PIX";
 
+export type CategoriaProduto = "BEBIDA" | "COMIDA" | "INGRESSO" | "OUTRO";
+
 export interface CaixaApi {
   id: string;
   operadorId: string;
@@ -333,4 +335,63 @@ export function salvarValoresHora(dados: {
       valorHora: centavosParaReais(item.valorHoraCentavos),
     })),
   }) as Promise<ValorHoraAtualApi>;
+}
+
+export interface ProdutoApi {
+  id: string;
+  nome: string;
+  categoria: CategoriaProduto;
+  quantidadeEstoque: number;
+  valorVenda: number;
+  valorCusto: number;
+  ativo: boolean;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+/** Exclusivo do Admin — Cadastro de Estoque (lista só produtos ativos). */
+export function listarProdutos(): Promise<ProdutoApi[]> {
+  return request<ProdutoApi[]>("/api/produtos", "GET") as Promise<ProdutoApi[]>;
+}
+
+/** Exclusivo do Admin. */
+export function criarProduto(dados: {
+  nome: string;
+  categoria: CategoriaProduto;
+  quantidadeEstoque: number;
+  valorVendaCentavos: number;
+  valorCustoCentavos: number;
+}): Promise<ProdutoApi> {
+  return request<ProdutoApi>("/api/produtos", "POST", {
+    nome: dados.nome,
+    categoria: dados.categoria,
+    quantidadeEstoque: dados.quantidadeEstoque,
+    valorVenda: centavosParaReais(dados.valorVendaCentavos),
+    valorCusto: centavosParaReais(dados.valorCustoCentavos),
+  }) as Promise<ProdutoApi>;
+}
+
+/** Exclusivo do Admin — PUT substitui o registro inteiro. */
+export function atualizarProduto(
+  id: string,
+  dados: {
+    nome: string;
+    categoria: CategoriaProduto;
+    quantidadeEstoque: number;
+    valorVendaCentavos: number;
+    valorCustoCentavos: number;
+  },
+): Promise<ProdutoApi> {
+  return request<ProdutoApi>(`/api/produtos/${id}`, "PUT", {
+    nome: dados.nome,
+    categoria: dados.categoria,
+    quantidadeEstoque: dados.quantidadeEstoque,
+    valorVenda: centavosParaReais(dados.valorVendaCentavos),
+    valorCusto: centavosParaReais(dados.valorCustoCentavos),
+  }) as Promise<ProdutoApi>;
+}
+
+/** Exclusivo do Admin — desativação lógica, nunca apaga o registro. */
+export function desativarProduto(id: string): Promise<ProdutoApi> {
+  return request<ProdutoApi>(`/api/produtos/${id}/desativar`, "PUT") as Promise<ProdutoApi>;
 }
