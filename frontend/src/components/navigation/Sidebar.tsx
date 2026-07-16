@@ -3,6 +3,7 @@ import { useAuth } from "../../lib/auth";
 import { useSidebar } from "../../hooks/useSidebar";
 import {
   BrasaoIcon,
+  CaixoteIcon,
   DistintivoIcon,
   HorseshoeIcon,
   LivroCaixaIcon,
@@ -23,13 +24,13 @@ const ITENS_OPERACAO: ItemNavegacao[] = [
   { rotulo: "Gerenciar Equipe", icone: DistintivoIcon, rota: "/admin-dashboard/equipe" },
   { rotulo: "Scorecard", icone: LivroCaixaIcon, rota: "/admin-dashboard/scorecard" },
   { rotulo: "Histórico de Turnos", icone: RelogioIcon, rota: "/admin-dashboard/historico-turnos" },
+  { rotulo: "Estoque", icone: CaixoteIcon, rota: "/admin-dashboard/estoque" },
 ];
 
 /** Módulos do roadmap ainda sem rota — placa de arena, apagados, sem clique. */
 const ITENS_NO_CURRAL: ItemNavegacao[] = [
   { rotulo: "Financeiro", icone: PlacaIcon },
   { rotulo: "Relatórios", icone: PlacaIcon },
-  { rotulo: "Estoque", icone: PlacaIcon },
   { rotulo: "Cortesias", icone: PlacaIcon },
   { rotulo: "Configurações", icone: PlacaIcon },
 ];
