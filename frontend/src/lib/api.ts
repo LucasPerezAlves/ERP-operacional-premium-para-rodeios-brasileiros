@@ -134,7 +134,7 @@ const MENSAGENS_POR_STATUS: Record<number, string> = {
   401: "Sessão expirada. Saia e entre novamente.",
   403: "Você não tem permissão para esta ação.",
   404: "Não encontrado.",
-  409: "Conflito: este operador já tem um caixa aberto, ou o caixa já foi fechado.",
+  409: "Conflito: a ação não é permitida no estado atual.",
   422: "Valor maior que o dinheiro disponível no caixa.",
 };
 
@@ -394,4 +394,99 @@ export function atualizarProduto(
 /** Exclusivo do Admin — desativação lógica, nunca apaga o registro. */
 export function desativarProduto(id: string): Promise<ProdutoApi> {
   return request<ProdutoApi>(`/api/produtos/${id}/desativar`, "PUT") as Promise<ProdutoApi>;
+}
+
+// ---------------------------------------------------------------------------
+// Evento (Sprint 1) — entidade central da plataforma, isolada nesta entrega:
+// nenhum outro módulo (Caixa, Funcionário, Catálogo) referencia Evento ainda.
+// ---------------------------------------------------------------------------
+
+export type StatusEvento =
+  | "RASCUNHO"
+  | "PUBLICADO"
+  | "EM_ANDAMENTO"
+  | "ENCERRADO"
+  | "CANCELADO"
+  | "ARQUIVADO";
+
+export interface EventoApi {
+  id: string;
+  nome: string;
+  slug: string;
+  descricaoCurta: string | null;
+  descricaoCompleta: string | null;
+  bannerUrl: string | null;
+  imagemDestaqueUrl: string | null;
+  cidade: string | null;
+  estado: string | null;
+  endereco: string | null;
+  local: string | null;
+  dataInicio: string;
+  dataFim: string;
+  horarioAbertura: string | null;
+  status: StatusEvento;
+  capacidade: number | null;
+  organizador: string | null;
+  observacoes: string | null;
+  criadoPorAdminId: string;
+  publicadoEm: string | null;
+  encerradoEm: string | null;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+export interface DadosEvento {
+  nome: string;
+  descricaoCurta: string | null;
+  descricaoCompleta: string | null;
+  bannerUrl: string | null;
+  imagemDestaqueUrl: string | null;
+  cidade: string | null;
+  estado: string | null;
+  endereco: string | null;
+  local: string | null;
+  dataInicio: string;
+  dataFim: string;
+  horarioAbertura: string | null;
+  capacidade: number | null;
+  organizador: string | null;
+  observacoes: string | null;
+}
+
+/** Exclusivo do Admin — CRUD administrativo (todos os status; sem endpoint público ainda). */
+export function listarEventos(): Promise<EventoApi[]> {
+  return request<EventoApi[]>("/api/eventos", "GET") as Promise<EventoApi[]>;
+}
+
+export function criarEvento(dados: DadosEvento): Promise<EventoApi> {
+  return request<EventoApi>("/api/eventos", "POST", dados) as Promise<EventoApi>;
+}
+
+/** PUT substitui o registro inteiro; o slug nunca é regerado pelo back-end. */
+export function atualizarEvento(id: string, dados: DadosEvento): Promise<EventoApi> {
+  return request<EventoApi>(`/api/eventos/${id}`, "PUT", dados) as Promise<EventoApi>;
+}
+
+export function publicarEvento(id: string): Promise<EventoApi> {
+  return request<EventoApi>(`/api/eventos/${id}/publicar`, "PUT") as Promise<EventoApi>;
+}
+
+export function despublicarEvento(id: string): Promise<EventoApi> {
+  return request<EventoApi>(`/api/eventos/${id}/despublicar`, "PUT") as Promise<EventoApi>;
+}
+
+export function iniciarEvento(id: string): Promise<EventoApi> {
+  return request<EventoApi>(`/api/eventos/${id}/iniciar`, "PUT") as Promise<EventoApi>;
+}
+
+export function encerrarEvento(id: string): Promise<EventoApi> {
+  return request<EventoApi>(`/api/eventos/${id}/encerrar`, "PUT") as Promise<EventoApi>;
+}
+
+export function cancelarEvento(id: string): Promise<EventoApi> {
+  return request<EventoApi>(`/api/eventos/${id}/cancelar`, "PUT") as Promise<EventoApi>;
+}
+
+export function arquivarEvento(id: string): Promise<EventoApi> {
+  return request<EventoApi>(`/api/eventos/${id}/arquivar`, "PUT") as Promise<EventoApi>;
 }
