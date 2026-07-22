@@ -19,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.arena.rodeio.dto.EventoRequest;
 import com.arena.rodeio.model.Evento;
+import com.arena.rodeio.model.StatusEvento;
 import com.arena.rodeio.repository.EventoRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -116,6 +117,42 @@ class EventoServiceTest {
         assertThatThrownBy(() -> service.arquivar(UUID.randomUUID()))
             .isInstanceOf(ResponseStatusException.class)
             .hasMessageContaining("arquivar");
+    }
+
+    @Test
+    void listarPublicos_retornaSoEventosPublicados() {
+        var publicado = criarEntidade();
+        publicado.publicar();
+        when(repository.findByStatusOrderByDataInicioAsc(StatusEvento.PUBLICADO))
+            .thenReturn(java.util.List.of(publicado));
+
+        var resultado = service.listarPublicos();
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).slug()).isEqualTo("rodeio-de-teste");
+        assertThat(resultado.get(0).nome()).isEqualTo("Rodeio de Teste");
+    }
+
+    @Test
+    void buscarPublicoPorSlug_retornaQuandoPublicado() {
+        var publicado = criarEntidade();
+        publicado.publicar();
+        when(repository.findBySlugAndStatus("rodeio-de-teste", StatusEvento.PUBLICADO))
+            .thenReturn(Optional.of(publicado));
+
+        var resultado = service.buscarPublicoPorSlug("rodeio-de-teste");
+
+        assertThat(resultado.nome()).isEqualTo("Rodeio de Teste");
+    }
+
+    @Test
+    void buscarPublicoPorSlug_lanca404QuandoNaoPublicado() {
+        when(repository.findBySlugAndStatus("inexistente", StatusEvento.PUBLICADO))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.buscarPublicoPorSlug("inexistente"))
+            .isInstanceOf(ResponseStatusException.class)
+            .hasMessageContaining("não encontrado");
     }
 
     private Evento criarEntidade() {

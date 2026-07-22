@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.arena.rodeio.dto.EventoPublicoResponse;
 import com.arena.rodeio.dto.EventoRequest;
 import com.arena.rodeio.dto.EventoResponse;
 import com.arena.rodeio.model.Evento;
@@ -56,6 +57,21 @@ public class EventoService {
     @Transactional(readOnly = true)
     public EventoResponse buscar(UUID id) {
         return EventoResponse.from(buscarEntidade(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<EventoPublicoResponse> listarPublicos() {
+        return repository.findByStatusOrderByDataInicioAsc(StatusEvento.PUBLICADO).stream()
+            .map(EventoPublicoResponse::from)
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public EventoPublicoResponse buscarPublicoPorSlug(String slug) {
+        return repository.findBySlugAndStatus(slug, StatusEvento.PUBLICADO)
+            .map(EventoPublicoResponse::from)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Evento não encontrado."));
     }
 
     /** PUT substitui o registro inteiro. O slug nunca é regerado — é o permalink estável do evento. */
