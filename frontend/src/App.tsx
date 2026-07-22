@@ -8,6 +8,7 @@ import AdminAbrirCaixa from "./pages/AdminAbrirCaixa";
 import AdminScorecard from "./pages/AdminScorecard";
 import HistoricoTurnos from "./pages/HistoricoTurnos";
 import EstoqueAdmin from "./pages/EstoqueAdmin";
+import EventosAdmin from "./pages/EventosAdmin";
 import GerenciamentoEquipe from "./pages/GerenciamentoEquipe";
 import OperadorLandingPage from "./pages/OperadorLandingPage";
 import OperadorVenda from "./pages/OperadorVenda";
@@ -21,6 +22,7 @@ import OperadorVenda from "./pages/OperadorVenda";
  * - "/admin-dashboard/scorecard"   → Scorecard de Divergência de Operadores
  * - "/admin-dashboard/historico-turnos" → Histórico de Turnos (jornada operacional)
  * - "/admin-dashboard/estoque"     → Cadastro de Estoque (catálogo de produtos)
+ * - "/admin-dashboard/eventos"     → Cadastro de Eventos (entidade central, Sprint 1)
  * - "/operador-dashboard"          → Landing do OPERADOR (status + funções)
  * - "/operador-dashboard/venda"    → PDV de venda (só com caixa aberto)
  */
@@ -45,6 +47,7 @@ export default function App() {
             <Route path="/admin-dashboard/scorecard" element={<AdminScorecard />} />
             <Route path="/admin-dashboard/historico-turnos" element={<HistoricoTurnos />} />
             <Route path="/admin-dashboard/estoque" element={<EstoqueAdmin />} />
+            <Route path="/admin-dashboard/eventos" element={<EventosAdmin />} />
           </Route>
           <Route
             path="/operador-dashboard"
