@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.arena.rodeio.dto.EventoPublicoResponse;
 import com.arena.rodeio.dto.EventoRequest;
 import com.arena.rodeio.dto.EventoResponse;
 import com.arena.rodeio.service.EventoService;
@@ -35,6 +36,21 @@ public class EventoController {
 
     public EventoController(EventoService eventoService) {
         this.eventoService = eventoService;
+    }
+
+    /**
+     * Únicos endpoints públicos de todo o backend (Área Pública/Landing) —
+     * sem @PreAuthorize de propósito. Ver SecurityConfig para o matcher
+     * permitAll() restrito a estas duas rotas.
+     */
+    @GetMapping("/publicos")
+    public List<EventoPublicoResponse> listarPublicos() {
+        return eventoService.listarPublicos();
+    }
+
+    @GetMapping("/publicos/{slug}")
+    public EventoPublicoResponse buscarPublico(@PathVariable String slug) {
+        return eventoService.buscarPublicoPorSlug(slug);
     }
 
     @PostMapping
