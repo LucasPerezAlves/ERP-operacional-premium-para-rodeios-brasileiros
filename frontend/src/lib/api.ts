@@ -490,3 +490,62 @@ export function cancelarEvento(id: string): Promise<EventoApi> {
 export function arquivarEvento(id: string): Promise<EventoApi> {
   return request<EventoApi>(`/api/eventos/${id}/arquivar`, "PUT") as Promise<EventoApi>;
 }
+
+/**
+ * Fetch sem autenticação — paralelo ao request() acima, que sempre exige
+ * sessão Supabase (lançaria 401 sem token). Usado só pelos endpoints
+ * públicos da Landing Page.
+ */
+async function requestPublico<T>(caminho: string): Promise<T> {
+  let resposta: Response;
+  try {
+    resposta = await fetch(`${API_URL}${caminho}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch {
+    throw new ApiError(0, "Sem conexão com a arena. Verifique a rede e tente de novo.");
+  }
+
+  if (!resposta.ok) {
+    let mensagem =
+      MENSAGENS_POR_STATUS[resposta.status] ?? `Erro inesperado (${resposta.status}).`;
+    try {
+      const body = (await resposta.json()) as { mensagem?: string; message?: string };
+      mensagem = body.mensagem || body.message || mensagem;
+    } catch {
+      // corpo vazio ou não-JSON: mantém a mensagem mapeada
+    }
+    throw new ApiError(resposta.status, mensagem);
+  }
+
+  return (await resposta.json()) as T;
+}
+
+export interface EventoPublicoApi {
+  slug: string;
+  nome: string;
+  descricaoCurta: string | null;
+  descricaoCompleta: string | null;
+  bannerUrl: string | null;
+  imagemDestaqueUrl: string | null;
+  cidade: string | null;
+  estado: string | null;
+  endereco: string | null;
+  local: string | null;
+  dataInicio: string;
+  dataFim: string;
+  horarioAbertura: string | null;
+  capacidade: number | null;
+  organizador: string | null;
+}
+
+/** Público — sem autenticação, consumido pela Landing Page. */
+export function listarEventosPublicos(): Promise<EventoPublicoApi[]> {
+  return requestPublico<EventoPublicoApi[]>("/api/eventos/publicos");
+}
+
+/** Público — 404 se o slug não existir ou o evento não estiver PUBLICADO. */
+export function buscarEventoPublicoPorSlug(slug: string): Promise<EventoPublicoApi> {
+  return requestPublico<EventoPublicoApi>(`/api/eventos/publicos/${encodeURIComponent(slug)}`);
+}
