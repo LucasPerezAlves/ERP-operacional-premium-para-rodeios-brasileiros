@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../lib/auth";
 import { useSidebar } from "../../hooks/useSidebar";
 import {
+  BandeirolaIcon,
   BrasaoIcon,
   CaixoteIcon,
   DistintivoIcon,
@@ -20,6 +21,7 @@ import SidebarTooltip from "./SidebarTooltip";
 /** Rotas reais do módulo admin — cada módulo novo entra aqui com a rota. */
 const ITENS_OPERACAO: ItemNavegacao[] = [
   { rotulo: "Dashboard", icone: BrasaoIcon, rota: "/admin-dashboard", fimDaRota: true },
+  { rotulo: "Eventos", icone: BandeirolaIcon, rota: "/admin-dashboard/eventos" },
   { rotulo: "Abrir Caixa", icone: HorseshoeIcon, rota: "/admin-dashboard/abrir-caixa" },
   { rotulo: "Gerenciar Equipe", icone: DistintivoIcon, rota: "/admin-dashboard/equipe" },
   { rotulo: "Scorecard", icone: LivroCaixaIcon, rota: "/admin-dashboard/scorecard" },

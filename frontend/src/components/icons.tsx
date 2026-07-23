@@ -430,3 +430,19 @@ export function CaixoteIcon({ className = "h-5 w-5" }: { className?: string }) {
     </svg>
   );
 }
+
+/** Bandeirola de arena hasteada — Eventos (cadastro do evento central, Sprint 1). */
+export function BandeirolaIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
+      <path d="M6 21V4" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+      <path
+        d="M6 4.5 18.5 7 6 9.5Z"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <path d="M4.5 21h3" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+    </svg>
+  );
+}

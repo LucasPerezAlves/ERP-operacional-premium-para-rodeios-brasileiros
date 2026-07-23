@@ -1,7 +1,97 @@
-# CLAUDE.md — Controle da Arena (Gestão Financeira de Rodeio)
+# CLAUDE.md — Controle da Arena (Plataforma Velho Promoções)
 
-Sistema de controle financeiro para eventos de rodeio: bilheteria, bares, caixas,
-sangrias e prestação de contas em tempo real, operando em ambiente de rede instável.
+O **Controle da Arena** é a plataforma completa de gestão de eventos da
+**Velho Promoções** — não mais só o back-office interno de um rodeio. A
+plataforma é composta por duas grandes áreas, que compartilham o mesmo
+domínio e nunca duplicam cadastro entre si:
+
+- **Área Pública** — Landing Page institucional, divulgação de eventos,
+  vitrine somente-leitura sobre os eventos publicados pelo Admin.
+- **Área Operacional** — tudo que já existia: Administração, Operadores,
+  Financeiro, Caixa, Sangrias, Jornada, Catálogo Operacional, Scorecards,
+  SOS e Analytics futuros.
+
+O núcleo funcional segue sendo o mesmo: bilheteria, bares, caixas, sangrias
+e prestação de contas em tempo real, operando em ambiente de rede instável.
+
+## Visão de Produto e Arquitetura de Rotas
+
+Fluxo de navegação oficial:
+
+```
+/                → Landing Page pública (institucional + eventos publicados)
+   ↓ "Entrar"
+/auth            → Login/Cadastro (tela preservada, só muda de rota)
+   ↓ (RBAC resolve o perfil)
+/admin-dashboard      → Área Operacional do Admin
+/operador-dashboard   → Área Operacional do Operador
+```
+
+- A raiz `/` deixou de ser a tela de login — agora é a Landing Page pública.
+- `AuthPage` migra para `/auth`, sem nenhuma mudança de comportamento interno.
+- Rota desconhecida (`*`) redireciona para `/` (Landing), não mais para o login.
+- A Landing **não tem lógica própria de eventos** — consome exclusivamente
+  eventos com `status = PUBLICADO`, cadastrados pelo Admin. Ver "Entidade
+  Central: Evento" abaixo.
+- **Assets oficiais de marca:** a pasta `images/` na raiz do repositório
+  contém os materiais oficiais da Velho Promoções (logo, banner de
+  divulgação, foto de evento de demonstração). Toda implementação de Landing
+  Page ou interface pública deve usar esses assets — nunca placeholder
+  genérico quando um asset oficial já existe.
+
+## Entidade Central: Evento
+
+`Evento` é o aggregate root de todo o domínio — Landing, Administração,
+Operação, Financeiro, Caixa, Sangrias, Jornada, Relatórios, Catálogo e
+Analytics futuros são todos alimentados pelo mesmo cadastro de evento, sem
+duplicidade.
+
+**Propagação por escopo transitivo, não por FK duplicado em toda tabela.**
+`Caixa` é o único ponto que referencia `evento_id` diretamente; `Venda` e
+`Sangria` já referenciam `caixa_id`, então herdam o escopo do evento
+transitivamente pela cadeia `Evento → Caixa → Venda/Sangria`. Não adicionar
+`evento_id` em `Venda`/`Sangria`/tabelas derivadas — seria redundante.
+
+**Entidades persistentes entre eventos (não duplicam por evento):**
+`PerfilFuncionario` (funcionário existe uma vez, trabalha em N eventos),
+o Catálogo Operacional (reutilizável entre eventos por design — ver seção
+própria) e `ConfiguracaoValorHora` (política de RH, não do evento).
+
+**Contrato Landing ↔ Admin:** `Evento` tem um status de publicação
+(`RASCUNHO` / `PUBLICADO` / `ENCERRADO`). Só o endpoint público de leitura
+filtra por `PUBLICADO`; o CRUD administrativo enxerga todos os status. O
+DTO público (`EventoPublicoResponse` ou equivalente) deve ser distinto do
+DTO administrativo — nunca reaproveitar o mesmo response, para não vazar
+campo sensível por engano numa serialização futura.
+
+## Catálogo Operacional (antigo "Estoque")
+
+O módulo antes chamado "Estoque" evolui para o domínio **Catálogo
+Operacional** — fonte única de produtos para toda a plataforma (PDV,
+estoque, combos, itens de consumo, relatórios, inventário, conciliação,
+compras futuras). Todo produto é cadastrado uma única vez e reutilizado
+entre eventos (por isso não é escopado por `evento_id` — ver seção acima).
+
+A entidade `Produto` já existente (peça 1/6 entregue) ganha os campos
+`unidade`, `fornecedor` (texto simples — não vale criar entidade
+`Fornecedor` própria enquanto não houver um segundo consumidor do dado) e
+`observacoes`.
+
+**Fluxos de cadastro nesta fase:**
+1. Cadastro manual (já existente, evoluído com os campos acima).
+2. Importação em lote via **arquivo JSON** — carga inicial e reaproveitamento
+   entre eventos. Implementar como uma porta/estratégia de parsing
+   desacoplada do formato (só JSON agora), para CSV/Excel/API entrarem depois
+   sem reabrir o contrato de `ProdutoService`. Validação item a item do
+   array (mesmo padrão de Bean Validation de `ProdutoRequest`), com
+   relatório de erro por linha — nunca tudo-ou-nada silencioso.
+
+**IA local removida do escopo, permanentemente.** Motivo: o hardware
+disponível não suporta modelos locais de forma consistente. Não usar OCR,
+visão computacional, reconhecimento de imagem, modelos locais nem
+classificação automática de produto em nenhuma frente do roadmap — os itens
+6 e 7 do antigo backlog do Master Admin (cadastro de estoque por foto e
+leitura de vendas por foto) foram removidos definitivamente, não adiados.
 
 ## Stack Tecnológica (OFICIAL)
 
@@ -18,7 +108,9 @@ sangrias e prestação de contas em tempo real, operando em ambiente de rede ins
   A validação usa o endpoint JWKS (`{SUPABASE_URL}/auth/v1/.well-known/jwks.json`),
   configurado via `SUPABASE_URL`.
 - **Pacote raiz:** `com.arena.rodeio` com camadas `controller`, `service`,
-  `repository`, `model`, `dto`, `config`
+  `repository`, `model`, `dto`, `config`. Ver "Recomendações de Arquitetura
+  para Escalabilidade" abaixo para a evolução recomendada desse pacote à
+  medida que Evento e Área Pública entram.
 
 ### Front-end — `frontend/`
 - **Framework:** React 18 + TypeScript + Vite
@@ -26,7 +118,9 @@ sangrias e prestação de contas em tempo real, operando em ambiente de rede ins
   madeira (`wood`), couro desgastado (`leather`), ferrugem para erros (`rust`) e
   dourado fosco para destaques (`gold`); títulos em Alfa Slab One, corpo em Inter
 - **Autenticação:** SDK oficial `@supabase/supabase-js` (signInWithPassword / signUp)
-- A raiz `/` carrega diretamente a tela de Login/Cadastro — **não há landing page pública**
+- A raiz `/` é a **Landing Page pública** da Velho Promoções (institucional +
+  eventos publicados); o login/cadastro mora em `/auth` — ver "Visão de
+  Produto e Arquitetura de Rotas" acima.
 - **Landing Pages por perfil (pós-login):** cada nível de acesso tem uma página
   inicial própria, dedicada — não um dashboard genérico com `if`:
   - `AdminLandingPage.tsx` (`/admin-dashboard`) — grid de módulos (cards
@@ -194,7 +288,12 @@ e não:
    `perfis_funcionarios` pelo `sub` do JWT a cada requisição; perfis
    `PENDENTE`/`REJEITADO` não recebem nenhuma role. Endpoints sensíveis usam
    `@PreAuthorize("hasRole(...)")` ou `hasAnyRole(...)` — nunca só
-   `authenticated()`, que não garante aprovação da gerência.
+   `authenticated()`, que não garante aprovação da gerência. **Única exceção
+   deliberada:** o endpoint público de leitura de eventos publicados (Área
+   Pública/Landing), que deve usar um matcher `permitAll()` explícito e
+   restrito (só `GET`, só o path de eventos públicos, só o DTO público) no
+   `SecurityConfig` — nunca uma regra genérica que amplie o `permitAll` além
+   desse escopo.
 7. **Abertura e fechamento de caixa são exclusivos do MASTER_ADMIN.** O
    Operador **não tem autonomia** para abrir nem fechar o próprio caixa —
    essa responsabilidade é 100% da gerência. Fluxo: o Admin acessa "Abrir
@@ -244,8 +343,8 @@ quem mais emitiu cortesias na noite.
 
 ## Backlog de Funcionalidades — Painéis (RBAC)
 
-Ideias de produto para os painéis `OPERADOR` e `MASTER_ADMIN`, a implementar dentro
-dos módulos 2–4 do roadmap (não são módulos novos, são features desses painéis).
+Ideias de produto para os painéis `OPERADOR` e `MASTER_ADMIN`, a implementar ao
+longo do roadmap (não são módulos novos, são features desses painéis).
 
 ### Painel do Operador
 
@@ -286,18 +385,40 @@ dos módulos 2–4 do roadmap (não são módulos novos, são features desses pa
 5. **Dashboard de Custo de Funcionário em Tempo Real** — custo acumulado da
    equipe ativa durante o evento (ex.: "15 funcionários ativos, custo da hora
    corrente: R$ 450,00"), calculado a partir do registro de ponto.
-6. **Cadastro de Estoque por Foto (IA/OCR)** — o Admin fotografa a nota fiscal
-   de compra; um serviço de IA de visão computacional lê os itens, quantidades
-   e valores da imagem e sugere o cadastro automático no estoque (módulo 3),
-   evitando digitação manual item por item. A leitura é uma **sugestão**: o
-   Admin sempre revisa antes de confirmar o cadastro.
-7. **Leitura de Vendas por Foto (Conciliação de Fechamento)** — mesmo motor de
-   IA aplicado no fluxo de fechamento de caixa (Gerenciamento de Equipe): o
-   Admin fotografa o registro de vendas do posto (comanda, régua de contagem);
-   a IA identifica quais produtos foram vendidos e em que quantidade, exibe a
-   leitura para conferência e **só abate do estoque depois do "OK" do Admin**
-   — nunca automático sem confirmação humana. Alimenta a conciliação da regra
-   de negócio nº 3 (Dinheiro vs. Estoque).
+
+> **Removidos permanentemente:** os antigos itens 6 ("Cadastro de Estoque
+> por Foto/IA-OCR") e 7 ("Leitura de Vendas por Foto") saíram do backlog —
+> ver "IA local removida do escopo" na seção do Catálogo Operacional. A
+> conciliação da regra de negócio nº 3 (Dinheiro vs. Estoque) continua no
+> roadmap, só que sempre por lançamento manual/itemização de venda, nunca
+> por leitura automática de imagem.
+
+## Recomendações de Arquitetura para Escalabilidade
+
+À medida que Evento, Área Pública e Catálogo Operacional entram, o projeto
+deve seguir estas diretrizes para não perder a limpeza arquitetural:
+
+1. **Reorganizar por domínio, não só por camada técnica.** O pacote flat
+   atual (`controller/service/repository/model/dto` únicos) funcionava com 7
+   controllers; não escala bem misturando endpoints públicos e operacionais.
+   Evoluir para subpacotes por domínio — `com.arena.rodeio.evento`,
+   `.catalogo`, `.caixa`, `.publico` — mantendo a mesma disciplina de
+   camadas dentro de cada um.
+2. **DTOs públicos e administrativos nunca compartilhados 1:1.** Mesmo
+   quando a entidade é a mesma (`Evento`), a Landing e o Admin devem ter
+   response shapes distintos desde o primeiro commit — evita vazar campo
+   sensível por uma serialização futura descuidada.
+3. **Matchers de segurança explícitos por área**, não uma regra geral com
+   exceções pontuais — `/api/eventos/publicos/**` com `permitAll()`
+   restrito a `GET`, resto do sistema continua exigindo role. Mais fácil de
+   auditar (ver regra inegociável nº 6).
+4. **Importação de catálogo como porta/estratégia desacoplada do formato**
+   (`ImportadorProdutos`, hoje só `Json`) — CSV/Excel/API entram como novas
+   implementações, nunca como `if/else` dentro do mesmo método.
+5. **Disciplina incremental, sem antecipar abstração.** Mesma prática já
+   usada no projeto (ex.: não criar entidade `Fornecedor` enquanto só há um
+   campo de texto consumindo o dado) — Evento e Catálogo devem crescer em
+   fatias pequenas e testáveis, como o Módulo 2 já foi entregue.
 
 ## Como Rodar
 
@@ -363,11 +484,32 @@ Cadastro) exige:
      alimentam o `NivelAlertaNumerario`; painel "Recolhimento Recomendado"
      em Gerenciamento de Equipe lista caixas em ATENCAO/CRITICO em tempo
      real (Realtime na tabela `vendas`) com ação direta de Registrar Sangria
-3. Carga de pista/bar e conciliação de estoque — inclui os itens 6 e 7 do
-   backlog do Master Admin (cadastro de estoque e leitura de vendas por
-   foto/IA, sempre com confirmação humana antes de qualquer baixa)
-4. Cortesias e relatórios do Admin
-5. PWA offline-first e cashless/RFID
+3. **Evento (entidade central)** ✅ Sprint 1 concluída — migration
+   (`012_eventos.sql`), entidade `Evento`, CRUD administrativo
+   (`/api/eventos`) e state machine completa de status (`RASCUNHO` →
+   `PUBLICADO` → `EM_ANDAMENTO` → `ENCERRADO`, mais `CANCELADO`/`ARQUIVADO`),
+   com slug gerado e imutável. Tela simples `/admin-dashboard/eventos` só
+   para validar o domínio — sem UX refinada ainda. Isolado por design:
+   nenhum outro módulo (Caixa, Funcionário, Catálogo) referencia Evento
+   nesta entrega (ver "Entidade Central: Evento" acima).
+4. **Landing Page Pública** ← próximo — rota `/`, endpoint público de leitura de
+   eventos publicados, consumo dos assets oficiais em `images/`. Depende de (3).
+5. **Reorganização de Rotas** — `AuthPage` migra para `/auth`, ajusta
+   `ProtectedRoute` e o redirect de rota desconhecida. Depende de (4) estar
+   funcional, para não deixar a raiz sem Landing.
+6. **Caixa × Evento** — `evento_id` em `Caixa`, seletor de evento ativo no
+   fluxo "Abrir Caixa", filtros de Centro de Operações/Scorecard/Histórico de
+   Turnos por evento. Retrofit de schema — decisão pendente sobre backfill de
+   caixas históricos sem evento associado.
+7. **Catálogo Operacional (evolução)** — campos `unidade`/`fornecedor`/
+   `observacoes` em `Produto` + importação em lote via JSON.
+8. Itemização de Venda (`Venda` ganha produto+quantidade) — pré-requisito da
+   conciliação.
+9. Carga de pista/bar (alocação de estoque a operador/posto no início do turno).
+10. Conciliação Dinheiro × Estoque no fechamento (regra de negócio nº 3) —
+    depende de (8) e (9), sempre manual (sem IA — ver acima).
+11. Cortesias e relatórios do Admin
+12. PWA offline-first e cashless/RFID
 
 ## Dívida Técnica de Design
 

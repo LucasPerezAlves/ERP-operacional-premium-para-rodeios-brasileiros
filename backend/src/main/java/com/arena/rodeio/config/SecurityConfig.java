@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -63,6 +64,15 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/aprovar").permitAll()
                 // Webhook do Supabase (protegido por segredo compartilhado no header)
                 .requestMatchers("/api/webhooks/**").permitAll()
+                // Área Pública/Landing — único GET do sistema sem JWT (regra
+                // inegociável nº 6, exceção deliberada e restrita a estas rotas).
+                .requestMatchers(HttpMethod.GET, "/api/eventos/publicos", "/api/eventos/publicos/**").permitAll()
+                // Sem isto, o 404 do endpoint público de detalhe (slug
+                // inexistente) faz o Spring Boot encaminhar internamente pra
+                // /error, que cai em anyRequest().authenticated() e devolve
+                // 401 em vez do 404 esperado — /error nunca expõe dado, é só
+                // a página de erro padrão do Boot.
+                .requestMatchers(HttpMethod.GET, "/error").permitAll()
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
                 jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));

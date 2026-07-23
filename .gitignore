@@ -12,6 +12,10 @@ frontend/dist/
 frontend/.env
 frontend/.env.local
 backend/run-local.bat
+backend/run-local.sh
+
+# Brainstorming (companheiro visual, sessões locais)
+.superpowers/
 
 # IDE / SO
 .idea/
@@ -20,3 +24,4 @@ backend/run-local.bat
 *.iml
 *.user
 Thumbs.db
+.DS_Store
