@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { useEventoPublico } from "../hooks/useEventosPublicos";
 import { Carregando } from "../components/ui/interacoes";
+import Alerta from "../components/ui/Alerta";
 import LandingHeader from "../components/landing/LandingHeader";
 import LandingFooter from "../components/landing/LandingFooter";
 
@@ -26,13 +27,22 @@ export default function EventoDetalhe() {
 
       {carregando && <Carregando rotulo="Carregando evento..." />}
 
-      {!carregando && (naoEncontrado || erro) && (
+      {!carregando && naoEncontrado && (
         <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-8">
-          <p className="font-display text-2xl text-gold-300">
+          <h1 className="font-display text-2xl text-gold-300">
             Evento não encontrado ou não está mais disponível.
-          </p>
+          </h1>
           <Link to="/" className="mt-6 inline-block text-sm font-semibold text-gold-300 hover:text-gold-200">
-            ← Voltar para a Landing
+            ← Voltar para a página inicial
+          </Link>
+        </div>
+      )}
+
+      {!carregando && !naoEncontrado && erro && (
+        <div className="mx-auto max-w-2xl px-4 py-16 sm:px-8">
+          <Alerta tipo="erro">{erro}</Alerta>
+          <Link to="/" className="mt-6 inline-block text-sm font-semibold text-gold-300 hover:text-gold-200">
+            ← Voltar para a página inicial
           </Link>
         </div>
       )}
