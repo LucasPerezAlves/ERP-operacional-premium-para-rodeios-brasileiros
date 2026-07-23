@@ -3,6 +3,8 @@ import { AuthProvider } from "./lib/auth";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
 import AuthPage from "./pages/AuthPage";
+import LandingPage from "./pages/LandingPage";
+import EventoDetalhe from "./pages/EventoDetalhe";
 import AdminLandingPage from "./pages/AdminLandingPage";
 import AdminAbrirCaixa from "./pages/AdminAbrirCaixa";
 import AdminScorecard from "./pages/AdminScorecard";
@@ -15,14 +17,16 @@ import OperadorVenda from "./pages/OperadorVenda";
 
 /**
  * Rotas da aplicação (RBAC):
- * - "/"                            → Login/Cadastro (sem landing page pública)
+ * - "/"                            → Landing Page pública (institucional + eventos publicados)
+ * - "/eventos/:slug"               → Detalhe público de um evento publicado
+ * - "/auth"                        → Login/Cadastro
  * - "/admin-dashboard"             → Landing do MASTER_ADMIN (grid de módulos)
  * - "/admin-dashboard/abrir-caixa" → Abertura de caixa (regra inegociável nº 7)
  * - "/admin-dashboard/equipe"      → Gerenciamento de Equipe (status + fechamento)
  * - "/admin-dashboard/scorecard"   → Scorecard de Divergência de Operadores
  * - "/admin-dashboard/historico-turnos" → Histórico de Turnos (jornada operacional)
  * - "/admin-dashboard/estoque"     → Cadastro de Estoque (catálogo de produtos)
- * - "/admin-dashboard/eventos"     → Cadastro de Eventos (entidade central, Sprint 1)
+ * - "/admin-dashboard/eventos"     → Cadastro de Eventos (entidade central)
  * - "/operador-dashboard"          → Landing do OPERADOR (status + funções)
  * - "/operador-dashboard/venda"    → PDV de venda (só com caixa aberto)
  */
@@ -31,7 +35,9 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<AuthPage />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/eventos/:slug" element={<EventoDetalhe />} />
+          <Route path="/auth" element={<AuthPage />} />
           {/* Módulo administrativo: um único guardião + AdminLayout (sidebar
               permanente); cada módulo novo é só mais um <Route> filho aqui. */}
           <Route
